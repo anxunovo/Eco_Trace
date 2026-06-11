@@ -1,0 +1,8 @@
+{
+  "setup_script": "setup.sh",
+  "toolsets": {
+    "nodejs": {
+      "version": "22"
+    }
+  }
+}

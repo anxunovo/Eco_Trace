@@ -1,0 +1,67 @@
+  ## Task: Update publish.js submit to call listing-create API
+
+  ### Context
+  - `new-site/public/assets/pages/publish.js` has a `submit()` function (around line 201) that calls `actions.createListing()` or `actions.updateListing()`
+  - `new-site/public/assets/api-adapter.js` has `createListing(draft)` and `updateListing(id, patch)` functions
+  - The AI analysis already calls the real API (via `analyzeWithAI()`)
+  - `POST /api/listings/create` is working and accepts: title, description, category, tradeMode, price, swapWanted, condition, campus, locationText, contactMethod, contactValue, images, isFood, foodInfo, tags, estimatedWeightKg
+
+  ### What to change
+
+  In `publish.js`, import the API functions:
+  ```javascript
+  import { createListing as createListingApi, updateListing as updateListingApi, isApiMode } from '../api-adapter.js';
+  ```
+
+  Modify the `submit()` function:
+
+  **For new listings (not editing):**
+  ```javascript
+  async function submit() {
+    // ... existing validation ...
+
+    ensurePlaceholder();
+    const payload = { /* ... existing payload construction ... */ };
+
+    if (editing) {
+      // existing edit logic unchanged
+    } else {
+      // Try API first
+      try {
+        const apiReady = await isApiMode();
+        if (apiReady) {
+          const result = await createListingApi(payload);
+          if (result) {
+            toast('发布成功 · 预计可节约 ' + (result.estimatedCarbonSavedKg || payload.estimatedCarbonSavedKg) + ' kg CO₂e');
+            router.push('/listings');
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('[publish] API create failed, using local:', e.message);
+      }
+      // Fallback to local store
+      const created = actions.createListing(payload);
+      toast('发布成功 · 预计可节约 ' + created.estimatedCarbonSavedKg + ' kg CO₂e');
+      router.push('/listings/' + created.id);
+    }
+  }
+  ```
+
+  Note: The API `createListing` returns `{ id, estimatedCarbonSavedKg, ... }`, redirect to `/listings` (list page) instead of detail since the listing ID from API may not match local state immediately.
+
+  **For edits (when `editing` is set):**
+  Add similar API-first pattern using `updateListingApi(editing.id, payload)`.
+
+  ### Rules
+  - Keep all existing local store logic as fallback
+  - The `runAI()` function is already connected to API — do NOT modify it
+  - Make `submit` an async function (add `async` keyword)
+  - Handle the case where API returns a different ID format than local store
+
+  ### Verification
+  1. `netlify dev` running
+  2. Go to /publish → upload image → AI analysis → fill form → submit
+  3. Check Network tab: `POST /api/listings/create` should be called
+  4. New listing should appear on /listings page
+  5. Stop `netlify dev` → submit should still work via local store (no crash)

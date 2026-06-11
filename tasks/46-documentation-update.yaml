@@ -1,0 +1,71 @@
+title: "EcoTrace: Documentation update for v1 launch"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update documentation for v1 launch
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - BUG-001 and BUG-002 are fixed
+  - Preparing for v1 launch and competition presentation
+  - This can run in parallel with E2E verification and other audits
+
+  ### What to do
+
+  1. **Update README.md**:
+     - Add project description and features
+     - Include setup instructions
+     - Add deployment information
+     - Include tech stack details
+     - Add screenshots or demo links
+
+  2. **Create USER_GUIDE.md**:
+     - User registration guide
+     - How to publish items
+     - How to browse and search
+     - How to complete item transfers
+     - Carbon impact explanation
+     - Mobile usage tips
+
+  3. **Update DEPLOY.md** (if exists, create if not):
+     - Netlify deployment steps
+     - Environment variables configuration
+     - Database seeding instructions
+     - API key setup (ZhipuAI)
+
+  4. **Create CONTRIBUTING.md**:
+     - Development setup
+     - Code structure overview
+     - Testing guidelines
+     - Pull request process
+
+  5. **Update ROADMAP.md**:
+     - Mark completed phases
+     - Update Phase 4 status
+     - Add any new features to backlog
+
+  6. **Verify BUGS.md**:
+     - Ensure BUG-001 and BUG-002 are marked as fixed
+     - Add verification checklist
+     - Document any new bugs found during testing
+
+  7. **Create DEMO_CHECKLIST.md**:
+     - Step-by-step demo script for competition
+     - Key features to demonstrate
+     - Troubleshooting common issues
+     - Demo data reference (seed users, sample listings)
+
+  ### Verification
+  1. README.md is comprehensive and accurate
+  2. USER_GUIDE.md covers all user flows
+  3. DEPLOY.md has clear deployment steps
+  4. CONTRIBUTING.md helps new developers get started
+  5. ROADMAP.md reflects current project state
+  6. BUGS.md is up to date
+  7. DEMO_CHECKLIST.md is ready for competition
+
+  ### Deliverables
+  - All documentation files updated and committed
+  - Documentation review complete

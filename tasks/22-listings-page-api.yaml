@@ -1,0 +1,39 @@
+title: "EcoTrace: Frontend listings.js — add API search/filter"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update listings.js to use API for search and filtering
+
+  Read `new-site/public/assets/pages/listings.js` to understand current filter/search logic.
+
+  ### Changes:
+
+  Add API-backed search as an alternative to localStorage filtering:
+
+  1. When DataSource is 'api', send search/filter requests to `/api/search` instead of filtering local data
+  2. Use the existing filter UI (category dropdowns, search bar, etc.) but route the parameters to the API
+  3. API response format: `{ success: true, data: [...], meta: { total, page, limit } }`
+  4. Update pagination to use server-side pagination (page/limit params)
+
+  Pattern:
+  ```javascript
+  // Inside the filter/search handler
+  if (dataSource === 'api') {
+    const { api } = await import('../api-adapter.js');
+    const results = await api.search({
+      q: searchQuery,
+      category: selectedCategory,
+      tradeMode: selectedTradeMode,
+      condition: selectedCondition,
+      page: currentPage,
+      limit: 20,
+    });
+    // Use results.data for display
+  } else {
+    // ... existing localStorage filter logic
+  }
+  ```
+
+  **Important:** Keep all existing filter UI and localStorage logic intact. API path is additive only.

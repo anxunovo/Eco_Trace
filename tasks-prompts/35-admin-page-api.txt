@@ -1,0 +1,67 @@
+  ## Task: Update admin.js to manage listings via API
+
+  ### Context
+  - `new-site/public/assets/pages/admin.js` is the admin management page
+  - Currently reads all listings from `state.listings` and uses `actions.removeListing()` for removal
+  - API endpoints:
+    - `GET /api/listings?limit=50` — all listings (already works)
+    - `DELETE /api/listings/delete?id={id}` — remove a listing
+    - `GET /api/users` — list all users (check if endpoint exists in `netlify/functions/users.mjs`)
+    - `GET /api/carbon/stats?scope=global` — dashboard stats
+
+  ### Read first
+  Read `new-site/public/assets/pages/admin.js` and `netlify/functions/users.mjs`.
+
+  ### What to change
+
+  1. Add imports:
+  ```javascript
+  import { fetchListings, isApiMode } from '../api-adapter.js';
+  ```
+
+  2. In setup(), load listings from API when available:
+  ```javascript
+  const apiListings = ref(null);
+
+  (async () => {
+    try {
+      if (await isApiMode()) {
+        const data = await fetchListings({ limit: 50 });
+        if (data?.listings) apiListings.value = data.listings;
+      }
+    } catch {}
+  })();
+  ```
+
+  3. Create merged listing display:
+  ```javascript
+  const allListings = computed(() =>
+    apiListings.value || state.listings
+  );
+  ```
+
+  4. Update removeListing to call API:
+  ```javascript
+  async function removeListing(id) {
+    try {
+      if (await isApiMode()) {
+        await fetch(`/api/listings/delete?id=${id}`, { method: 'DELETE' });
+      }
+    } catch {}
+    actions.removeListing(id); // local fallback always runs
+  }
+  ```
+
+  5. Update template to use `allListings` instead of `state.listings`.
+
+  ### Rules
+  - Keep existing store logic as fallback
+  - Admin page is only visible to users with role=ADMIN — do not change access logic
+  - The `removeListing` action should work both with and without API
+
+  ### Verification
+  1. `netlify dev` running
+  2. Navigate to /admin (switch to admin user first via /me page)
+  3. Should see all listings from API
+  4. Remove a listing → should disappear from both API and local state
+  5. Stop `netlify dev` → admin page still works with local data

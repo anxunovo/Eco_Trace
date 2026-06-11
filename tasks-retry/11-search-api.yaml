@@ -1,0 +1,22 @@
+title: "EcoTrace: Search API — keyword search across listings"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Search endpoint
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/search.mjs`
+
+  Endpoint: `GET /api/search`
+  - `config.path = '/api/search'`
+  - Query params: `q` (keyword), `category`, `tradeMode`, `condition`, `minPrice`, `maxPrice`, `campus`, `page`, `limit`
+  - Search `title` and `description` using SQL LIKE: `WHERE (title LIKE ? OR description LIKE ?)`
+  - Apply all optional filters
+  - Only search ACTIVE listings
+  - Return paginated results with `meta: { total, page, limit }`
+  - Order by `created_at DESC`
+
+  Use `getDb()`, `json()`/`error()`.

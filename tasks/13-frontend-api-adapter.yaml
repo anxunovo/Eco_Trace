@@ -1,0 +1,80 @@
+title: "EcoTrace: Frontend API Adapter — bridge SPA to backend"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Create Frontend API Adapter
+
+  Read `new-site/public/assets/store.js` to understand existing data layer.
+
+  ### Create `new-site/public/assets/api-adapter.js`
+
+  This module wraps all API calls so store.js can switch between localStorage and API:
+
+  ```javascript
+  const API_BASE = '/api';
+
+  // Detect if API is available
+  async function isApiAvailable() {
+    try {
+      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  // Generic fetch wrapper
+  async function apiFetch(path, options = {}) {
+    const userId = localStorage.getItem('tx.currentUserId') || 'u_alice';
+    const headers = { 'Content-Type': 'application/json', 'X-User-Id': userId, ...options.headers };
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'API error');
+    return data.data;
+  }
+
+  export const api = {
+    // Listings
+    getListings: (params) => apiFetch(`/listings?${new URLSearchParams(params)}`),
+    getListing: (id) => apiFetch(`/listings/${id}`),
+    createListing: (data) => apiFetch('/listings', { method: 'POST', body: JSON.stringify(data) }),
+    updateListing: (id, data) => apiFetch(`/listings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    removeListing: (id) => apiFetch(`/listings/${id}`, { method: 'DELETE' }),
+    completeListing: (id) => apiFetch(`/listings/${id}/complete`, { method: 'POST' }),
+
+    // Interests
+    expressInterest: (listingId, message) => apiFetch('/interests', { method: 'POST', body: JSON.stringify({ listingId, message }) }),
+    getInterests: (listingId) => apiFetch(`/interests?listingId=${listingId}`),
+
+    // AI
+    analyzeImage: (data) => apiFetch('/ai/analyze', { method: 'POST', body: JSON.stringify(data) }),
+
+    // Carbon
+    estimateCarbon: (data) => apiFetch('/carbon', { method: 'POST', body: JSON.stringify(data) }),
+    getDashboard: (params) => apiFetch(`/dashboard?${new URLSearchParams(params || {})}`),
+
+    // User
+    getUser: () => apiFetch('/user'),
+    updateUser: (data) => apiFetch('/user', { method: 'PUT', body: JSON.stringify(data) }),
+    getUsers: () => apiFetch('/users'),
+    switchUser: (userId) => apiFetch('/user/switch', { method: 'POST', body: JSON.stringify({ userId }) }),
+
+    // Search
+    search: (params) => apiFetch(`/search?${new URLSearchParams(params)}`),
+
+    // Admin
+    getAdminListings: (params) => apiFetch(`/admin/listings?${new URLSearchParams(params || {})}`),
+    removeAdminListing: (id) => apiFetch(`/admin/listings/${id}/remove`, { method: 'PUT' }),
+    resetData: () => apiFetch('/admin/reset', { method: 'POST' }),
+
+    // Init
+    initDb: () => apiFetch('/init-db', { method: 'POST' }),
+
+    // Availability
+    isApiAvailable,
+  };
+  ```
+
+  This file does NOT modify any existing files — it only adds a new module that can be imported by store.js later.

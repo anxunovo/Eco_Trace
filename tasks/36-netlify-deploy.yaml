@@ -1,0 +1,88 @@
+title: "EcoTrace: Netlify deploy — Phase 3 fixes + bug fixes deployment"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Deploy Phase 3 fixes + BUG-001/BUG-002 fixes to Netlify production
+
+  ### Context
+  - Phase 3 is complete (frontend integration fixes, AI calibration, campus defaults)
+  - BUG-001 (AI re-recognition cache) and BUG-002 (publish redirect to /listings/undefined) are fixed
+  - Production site: https://stu-eco-trace.netlify.app
+  - `netlify.toml` is already configured at project root
+  - Turso database is seeded (5 users, 20 listings, 11 carbon coefficients)
+  - ZhipuAI API key is configured
+
+  ### What to do
+
+  1. **Verify `netlify.toml`** is production-ready:
+  ```toml
+  [build]
+    command = "echo 'No build step needed'"
+    functions = "netlify/functions"
+    publish = "new-site/public"
+
+  [functions]
+    node_bundler = "esbuild"
+    directory = "netlify/functions"
+
+  [[redirects]]
+    from = "/*"
+    to = "/index.html"
+    status = 200
+    conditions = { Role = ["none"] }
+  ```
+
+  2. **Create `.env.example`** (never commit real keys):
+  ```
+  # Turso Database
+  TURSO_DATABASE_URL=libsql://your-db.turso.io
+  TURSO_AUTH_TOKEN=your-token-here
+
+  # ZhipuAI
+  ZHIPUAI_API_KEY=your-api-key-here
+  ```
+
+  3. **Update `.gitignore`** to ensure secrets are not committed:
+  ```
+  .env
+  .env.*
+  !.env.example
+  node_modules/
+  .netlify/
+  ```
+
+  4. **Verify `package.json`** has correct dependencies:
+  ```json
+  {
+    "name": "ecotrace",
+    "scripts": {
+      "dev": "netlify dev"
+    },
+    "dependencies": {}
+  }
+  ```
+  Note: We no longer need `@tursodatabase/serverless` since `db.js` uses fetch directly. Remove it if present.
+
+  5. **Create `netlify/functions/_health.mjs`** — a simple health check:
+  ```javascript
+  import { ok, cors } from './_lib/response.js';
+  export const config = { path: '/api/health' };
+  export default async (req) => req.method === 'OPTIONS' ? cors() : ok({ status: 'ok', timestamp: new Date().toISOString() });
+  ```
+
+  6. **Document deployment steps in `DEPLOY.md`**:
+  - Connect GitHub repo to Netlify
+  - Set environment variables in Netlify dashboard: TURSO_DATABASE_URL, TURSO_AUTH_TOKEN, ZHIPUAI_API_KEY
+  - Deploy settings: build command = `echo ok`, publish dir = `new-site/public`, functions dir = `netlify/functions`
+  - First deploy will auto-run on push
+
+  ### Verification
+  1. Run `netlify build` locally to verify build succeeds
+  2. Run `netlify deploy --prod` (or verify via Netlify dashboard)
+  3. Check that all API endpoints respond on production URL:
+     - GET /api/health → `{"status":"ok"}`
+     - GET /api/listings → returns listings array
+     - POST /api/ai/analyze → returns AI analysis (may fallback if rate-limited)
+  4. SPA routing works: navigate to /listings, /impact, /me → all render correctly

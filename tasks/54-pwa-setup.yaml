@@ -1,0 +1,73 @@
+title: "EcoTrace: Progressive Web App (PWA) setup"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Set up Progressive Web App (PWA)
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site is live at https://stu-eco-trace.netlify.app
+  - PWA would improve mobile experience and enable offline functionality
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Create PWA manifest**:
+     - Create `public/manifest.json` with app metadata
+     - Include app name, description, icons, theme colors
+     - Configure display mode (standalone, minimal-ui)
+     - Set up start URL and scope
+
+  2. **Create service worker**:
+     - Create `public/sw.js` service worker
+     - Implement caching strategy for static assets
+     - Cache API responses for offline viewing
+     - Implement cache invalidation strategy
+     - Add background sync for offline actions
+
+  3. **Register service worker in Vue app**:
+     - Add service worker registration in app.js
+     - Handle service worker updates
+     - Add update notifications for users
+     - Handle offline/online status
+
+  4. **Create app icons**:
+     - Generate icons in required sizes (192x192, 512x512)
+     - Create favicon.ico
+     - Add Apple touch icon
+     - Optimize icon sizes for performance
+
+  5. **Test PWA functionality**:
+     - Test installability (Add to Home Screen)
+     - Test offline functionality
+     - Test background sync
+     - Verify service worker updates correctly
+     - Test on mobile devices
+
+  6. **Configure Netlify for PWA**:
+     - Ensure service worker is served correctly
+     - Configure headers for service worker
+     - Set up HTTPS (already enabled on Netlify)
+
+  7. **Document PWA setup**:
+     - Add PWA setup to DEPLOY.md
+     - Document service worker caching strategy
+     - Document update mechanism
+     - Include testing procedures
+
+  ### Verification
+  1. PWA manifest is valid and complete
+  2. Service worker is registered and caching works
+  3. App is installable on mobile
+  4. Offline functionality works
+  5. Service worker updates correctly
+  6. Setup is documented
+
+  ### Deliverables
+  - public/manifest.json
+  - public/sw.js service worker
+  - App icons in multiple sizes
+  - Updated app.js with service worker registration
+  - Updated DEPLOY.md with PWA setup

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>碳循校园 · 校园二手漂流与碳减排估算平台</title>
+    <meta name="description" content="让校园里的闲置物品、剩余食品更容易被看见、被带走、被再次使用，把每一次流转转化为减碳贡献。">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="碳循校园 · 校园二手漂流与碳减排估算平台">
+    <meta property="og:description" content="面向中国高校的闲置物品流转平台，AI 识别物品类型，估算每次流转的碳减排量。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://stu-eco-trace.netlify.app/">
+    <meta property="og:image" content="https://stu-eco-trace.netlify.app/assets/icon.svg">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="碳循校园 · 校园二手漂流与碳减排估算平台">
+    <meta name="twitter:description" content="面向中国高校的闲置物品流转平台，AI 识别物品类型，估算每次流转的碳减排量。">
+    <meta name="twitter:image" content="https://stu-eco-trace.netlify.app/assets/icon.svg">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3f9451">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="碳循校园">
+    <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+    <link rel="apple-touch-icon" href="/assets/icon.svg">
+
+    <script src="/assets/vendor/tailwind.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              leaf: {
+                50:  '#f1f9f2',
+                100: '#dcf0de',
+                200: '#bae0bf',
+                300: '#8bc994',
+                400: '#5fae6c',
+                500: '#3f9451',
+                600: '#2f7740',
+                700: '#275f36',
+                800: '#224c2f',
+                900: '#1d3f28',
+              },
+              cream: '#f7f5ee',
+            },
+            fontFamily: {
+              sans: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Microsoft YaHei"', '"Segoe UI"', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/assets/styles.css">
+    <script src="/assets/vendor/chart.umd.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"></script>
+    <script src="/assets/vendor/html2canvas.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "vue": "/assets/vendor/vue.esm-browser.prod.js",
+        "vue-router": "/assets/vendor/vue-router.esm-browser.prod.js"
+      }
+    }
+    </script>
+</head>
+<body class="bg-cream text-slate-800 font-sans antialiased">
+    <div id="app">
+      <main>
+        <div class="min-h-screen flex items-center justify-center text-slate-400 text-sm">
+            加载中...
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/assets/seed.js?v=20260609-demo5"></script>
+    <script type="module" src="/assets/store.js?v=20260609-demo5"></script>
+    <script type="module" src="/assets/api-adapter.js?v=20260609-demo5"></script>
+    <script type="module" src="/assets/mock-ai.js?v=20260609-demo5"></script>
+    <script type="module" src="/assets/components.js?v=20260609-demo5"></script>
+    <script type="module" src="/assets/app.js?v=20260609-demo5"></script>
+
+    <script>
+      function isStaticDemoApiMessage(message) {
+        return String(message || '').includes('Static demo mode: API disabled');
+      }
+      window.addEventListener('error', (event) => {
+        if (isStaticDemoApiMessage(event.message)) return;
+        const app = document.getElementById('app');
+        if (!app || !app.textContent.includes('加载中')) return;
+        app.innerHTML = '<main><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;color:#b91c1c;font:14px system-ui;">前端模块加载失败：' + String(event.message || '未知错误') + '</div></main>';
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        if (isStaticDemoApiMessage(event.reason?.message || event.reason)) return;
+        const app = document.getElementById('app');
+        if (!app || !app.textContent.includes('加载中')) return;
+        const message = event.reason?.message || event.reason || '未知错误';
+        app.innerHTML = '<main><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;color:#b91c1c;font:14px system-ui;">前端启动失败：' + String(message) + '</div></main>';
+      });
+    </script>
+
+    <!-- Service Worker registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          const isLocalDemo = ['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname);
+          if (isLocalDemo) {
+            navigator.serviceWorker.getRegistrations()
+              .then(registrations => Promise.all(registrations.map(reg => reg.unregister())))
+              .then(() => caches?.keys ? caches.keys() : [])
+              .then(keys => Promise.all((keys || []).map(key => caches.delete(key))))
+              .catch(() => {});
+          } else {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          }
+        });
+      }
+    </script>
+</body>
+</html>

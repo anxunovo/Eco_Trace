@@ -1,0 +1,62 @@
+title: "EcoTrace: Performance audit on production"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Performance audit on production site
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site: https://stu-eco-trace.netlify.app
+  - Need to ensure the site performs well for competition presentation
+  - This can run in parallel with E2E verification and accessibility audit
+
+  ### What to do
+
+  1. **Lighthouse performance testing**:
+     - Run Lighthouse audit on production site
+     - Test all major pages: home, listings, publish, listing-detail, impact, me, admin
+     - Record performance scores (Performance, Accessibility, Best Practices, SEO)
+
+  2. **Core Web Vitals verification**:
+     - LCP (Largest Contentful Paint): target < 2.5s
+     - INP (Interaction to Next Paint): target < 200ms
+     - CLS (Cumulative Layout Shift): target < 0.1
+
+  3. **Network performance analysis**:
+     - Check page load times
+     - Analyze resource sizes (images, JS, CSS)
+     - Verify CDN usage for static assets
+     - Check for unnecessary redirects
+
+  4. **JavaScript bundle analysis**:
+     - Check bundle sizes for Vue 3 SPA
+     - Identify any large dependencies
+     - Verify lazy loading is used where appropriate
+
+  5. **Image optimization verification**:
+     - Check if images are properly compressed
+     - Verify WebP or modern formats are used
+     - Check for responsive images
+
+  6. **API performance testing**:
+     - Measure API response times
+     - Test /api/listings, /api/listing/:id, /api/ai/analyze
+     - Verify caching is used where appropriate
+
+  7. **Mobile performance**:
+     - Test on 3G and 4G network simulation
+     - Verify performance on mobile devices
+
+  ### Verification
+  1. Lighthouse Performance score > 90
+  2. Core Web Vitals meet targets (LCP < 2.5s, INP < 200ms, CLS < 0.1)
+  3. API response times < 500ms for most endpoints
+  4. No large bundle sizes (> 200KB uncompressed)
+  5. Images are optimized and use modern formats
+
+  ### Deliverables
+  - Performance audit report with Lighthouse scores
+  - List of performance optimization recommendations
+  - Update `BUGS.md` with any critical performance issues found

@@ -1,0 +1,37 @@
+# Environment Setup
+
+## Netlify Environment Variables
+
+Set these in Netlify Dashboard → Site Settings → Environment Variables.
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TURSO_DATABASE_URL` | Turso database URL | `libsql://ecotrace-xxx.turso.io` |
+| `TURSO_AUTH_TOKEN` | Turso auth token | `eyJhbGciOiJF...` |
+| `ZHIPUAI_API_KEY` | ZhipuAI API key for GLM-4.6V-Flash | your-key-here |
+
+## Turso Setup
+
+1. Install Turso CLI: `curl -sSfL https://get.tur.so/install.sh | bash`
+2. Sign up: `turso auth signup`
+3. Create database: `turso db create ecotrace`
+4. Get URL: `turso db show ecotrace --url`
+5. Create auth token: `turso db tokens create ecotrace`
+6. Apply schema: `turso db shell ecotrace < netlify/functions/_lib/schema.sql`
+
+## Netlify Deployment
+
+1. Connect GitHub repo: Yuuqq/Eco_Trace
+2. Build command: (leave empty or `echo 'No build step'`)
+3. Publish directory: `new-site/public`
+4. Functions directory: `netlify/functions`
+5. Add environment variables from above
+6. Deploy
+
+## Local Development
+
+1. Install Netlify CLI: `npm install -g netlify-cli`
+2. Login: `netlify login`
+3. Link site: `netlify link`
+4. Set env vars: `netlify env:set TURSO_DATABASE_URL xxx`
+5. Run dev: `netlify dev`

@@ -1,0 +1,63 @@
+title: "EcoTrace: Phase 4 E2E demo verification - Mobile branch"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: E2E demo verification on production - Mobile branch
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - BUG-001 (AI re-recognition cache) and BUG-002 (publish redirect to /listings/undefined) are fixed
+  - Production site: https://stu-eco-trace.netlify.app
+  - This task focuses on mobile browser verification (can run in parallel with task 42 for desktop)
+
+  ### What to do
+
+  1. **Complete demo path verification on mobile** - Walk through the full user journey:
+     - Register a new user account
+     - Browse listings on home page
+     - Publish a new item with AI analysis
+     - View listing details
+     - Submit interest
+     - Complete the item transfer
+     - View dashboard with carbon stats
+
+  2. **Verify BUG fixes on mobile**:
+     - Test BUG-001 fix: Upload item A → upload item B → verify AI shows B's content (not A)
+     - Test BUG-002 fix: Publish new item → verify redirects to correct `/listings/<id>` (not `/listings/undefined`)
+     - Verify the published item appears in listings list
+
+  3. **Carbon label verification on mobile**:
+     - Check all carbon values show "预计" or "估算" prefix
+     - Verify carbon source badges display correctly (AI vs formula)
+
+  4. **Mobile-specific verification**:
+     - Test on iPhone (use Chrome DevTools device emulation or real device)
+     - Test on Android (use Chrome DevTools device emulation or real device)
+     - Verify touch interactions work correctly
+     - Check mobile viewport handling
+     - Verify mobile navigation (bottom nav, hamburger menu, etc.)
+     - Test mobile-specific UI components (fixed CTA buttons, mobile modals)
+
+  5. **Food listing verification on mobile**:
+     - Publish a food item
+     - Verify safety notices appear on mobile
+     - Check auto-expiration logic (if implemented)
+
+  6. **Console error check**:
+     - Open browser dev tools (Chrome remote debugging if using real device)
+     - Walk through demo path
+     - Verify no console errors or warnings
+
+  ### Verification
+  1. All steps in demo path complete successfully on mobile
+  2. BUG-001 and BUG-002 fixes confirmed working on mobile
+  3. All carbon labels have "预计" or "估算" prefix
+  4. Mobile layout renders correctly on iOS and Android
+  5. Touch interactions work correctly
+  6. Zero console errors during demo walkthrough
+
+  ### Deliverables
+  - Document mobile browser compatibility results (iOS Safari, Chrome Android)
+  - Report any mobile-specific issues found in `BUGS.md` if new bugs discovered

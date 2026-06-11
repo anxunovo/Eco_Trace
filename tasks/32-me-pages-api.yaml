@@ -1,0 +1,67 @@
+title: "EcoTrace: me.js + me-listings.js — fetch user profile + my listings via API"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update me.js and me-listings.js to use API
+
+  ### Context
+  - `new-site/public/assets/pages/me.js` — "我的" aggregation page (mobile main entry)
+  - `new-site/public/assets/pages/me-listings.js` — "我的发布" list page
+  - Both currently read from `store.js` state (`state.listings.filter(...)`, `state.carbonRecords.filter(...)`)
+  - API endpoints:
+    - `GET /api/user/profile` — returns current user profile + stats
+    - `GET /api/listings?owner_id=X` or filter client-side from full listing set
+    - `GET /api/carbon/stats?scope=user` — returns user's carbon stats
+
+  ### Read first
+  Read both page files and `netlify/functions/user-profile.mjs` to understand the response format.
+
+  ### What to change in me.js
+
+  1. Add imports:
+  ```javascript
+  import { fetchUserProfile, fetchCarbonStats, isApiMode } from '../api-adapter.js';
+  ```
+
+  2. Add API data loading in setup():
+  ```javascript
+  const apiProfile = ref(null);
+
+  (async () => {
+    try {
+      if (await isApiMode()) {
+        const profile = await fetchUserProfile();
+        if (profile) apiProfile.value = profile;
+
+        const stats = await fetchCarbonStats('user');
+        if (stats) {
+          // Update displayed stats from API
+        }
+      }
+    } catch {}
+  })();
+  ```
+
+  3. Use computed properties that prefer API data when available:
+  ```javascript
+  const displayUser = computed(() => apiProfile.value || currentUser.value);
+  const myCarbon = computed(() => apiProfile.value?.totalCarbonSavedKg ?? localCarbon.value);
+  ```
+
+  ### What to change in me-listings.js
+
+  1. Similar pattern — try `fetchListings()` from API, filter by owner client-side
+  2. Fall back to `state.listings.filter(...)` from store
+
+  ### Rules
+  - Keep all existing store-based computed properties as fallback
+  - Do NOT modify the template structure
+  - API data is supplementary — use it when available, ignore when not
+
+  ### Verification
+  1. `netlify dev` running
+  2. Navigate to /me → should show user profile data from API
+  3. Navigate to /me/listings → should show user's listings
+  4. Stop `netlify dev` → pages should still work with local data

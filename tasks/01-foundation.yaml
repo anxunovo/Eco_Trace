@@ -1,0 +1,226 @@
+title: "EcoTrace: Project Foundation — netlify.toml, package.json, Turso schema, shared libs (v2)"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Set up project foundation for EcoTrace
+
+  You are adding a serverless backend to an existing Vue 3 SPA (static site in `new-site/public/`).
+  The SPA uses ESM imports directly in the browser — no bundler.
+
+  ### 1. Create `netlify.toml` at project root
+
+  ```toml
+  [build]
+    functions = "netlify/functions"
+    publish = "new-site/public"
+
+  [functions]
+    node_bundler = "esbuild"
+
+  # Only the SPA catch-all redirect needed
+  # API routes use config.path in each function file
+  [[redirects]]
+    from = "/*"
+    to = "/index.html"
+    status = 200
+  ```
+
+  **Important:** Functions use `config.path` for routing (e.g., `export const config = { path: '/api/listings' }`), so no `/api/*` redirect is needed. Only the SPA catch-all redirect is required. Use `.mts` extension for guaranteed ESM.
+
+  ### 2. Create `package.json` at project root
+
+  ```json
+  {
+    "name": "ecotrace",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+      "@tursodatabase/serverless": "^1.1.3",
+      "@netlify/functions": "^5.2.0"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0"
+    }
+  }
+  ```
+
+  **Note:** Use `@tursodatabase/serverless` (fetch-based, zero native deps) instead of `@libsql/client` which may pull native dependencies that fail in Netlify's esbuild bundler.
+
+  Then run `npm install`.
+
+  ### 3. Create Turso schema file: `netlify/functions/_lib/schema.sql`
+
+  ```sql
+  CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      nickname TEXT NOT NULL,
+      avatar TEXT NOT NULL DEFAULT '',
+      school TEXT NOT NULL DEFAULT '',
+      campus TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL DEFAULT 'STUDENT' CHECK (role IN ('STUDENT', 'ADMIN')),
+      eco_points INTEGER NOT NULL DEFAULT 0,
+      contact_method TEXT NOT NULL DEFAULT 'wechat',
+      contact_value TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  ) STRICT;
+
+  CREATE TABLE IF NOT EXISTS listings (
+      id TEXT PRIMARY KEY,
+      owner_id TEXT NOT NULL REFERENCES users(id),
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL,
+      trade_mode TEXT NOT NULL DEFAULT 'FREE' CHECK (trade_mode IN ('SALE', 'FREE', 'SWAP', 'NEGOTIABLE')),
+      price REAL,
+      swap_wanted TEXT,
+      condition TEXT NOT NULL DEFAULT 'GOOD' CHECK (condition IN ('NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'UNKNOWN')),
+      campus TEXT NOT NULL DEFAULT '',
+      location_text TEXT NOT NULL DEFAULT '',
+      contact_method TEXT NOT NULL DEFAULT 'wechat',
+      contact_value TEXT NOT NULL DEFAULT '',
+      images TEXT NOT NULL DEFAULT '[]',
+      estimated_weight_kg REAL,
+      estimated_carbon_saved_kg REAL NOT NULL DEFAULT 0,
+      ai_confidence REAL,
+      ai_assumptions TEXT NOT NULL DEFAULT '[]',
+      is_food INTEGER NOT NULL DEFAULT 0,
+      food_info TEXT,
+      tags TEXT NOT NULL DEFAULT '[]',
+      interested_count INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('DRAFT', 'ACTIVE', 'COMPLETED', 'EXPIRED', 'REMOVED')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      completed_at TEXT
+  ) STRICT;
+
+  CREATE INDEX IF NOT EXISTS idx_listings_status_category ON listings(status, category);
+  CREATE INDEX IF NOT EXISTS idx_listings_owner ON listings(owner_id);
+  CREATE INDEX IF NOT EXISTS idx_listings_created ON listings(created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS interests (
+      id TEXT PRIMARY KEY,
+      listing_id TEXT NOT NULL REFERENCES listings(id),
+      user_id TEXT NOT NULL REFERENCES users(id),
+      message TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  ) STRICT;
+
+  CREATE INDEX IF NOT EXISTS idx_interests_listing ON interests(listing_id);
+
+  CREATE TABLE IF NOT EXISTS carbon_records (
+      id TEXT PRIMARY KEY,
+      listing_id TEXT NOT NULL REFERENCES listings(id),
+      user_id TEXT NOT NULL REFERENCES users(id),
+      category TEXT NOT NULL,
+      carbon_saved_kg REAL NOT NULL DEFAULT 0,
+      source TEXT NOT NULL DEFAULT 'LISTING_COMPLETED',
+      is_food INTEGER NOT NULL DEFAULT 0,
+      weight_kg REAL NOT NULL DEFAULT 0,
+      engine_version TEXT NOT NULL DEFAULT 'v1',
+      coefficient_source TEXT NOT NULL DEFAULT 'CLCD',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  ) STRICT;
+
+  CREATE INDEX IF NOT EXISTS idx_carbon_records_user ON carbon_records(user_id);
+  CREATE INDEX IF NOT EXISTS idx_carbon_records_category ON carbon_records(category);
+  CREATE INDEX IF NOT EXISTS idx_carbon_records_created ON carbon_records(created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS carbon_coefficients (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category TEXT NOT NULL,
+      subcategory TEXT,
+      mode TEXT NOT NULL DEFAULT 'per_kg' CHECK (mode IN ('per_kg', 'per_item')),
+      factor REAL NOT NULL,
+      substitution_rate REAL NOT NULL DEFAULT 1.0,
+      default_weight_kg REAL,
+      source TEXT NOT NULL DEFAULT 'CLCD' CHECK (source IN ('CLCD', 'ecoinvent', 'IPCC', 'custom')),
+      source_ref TEXT,
+      source_version TEXT,
+      effective_from TEXT NOT NULL DEFAULT (datetime('now')),
+      effective_to TEXT,
+      note TEXT NOT NULL DEFAULT '',
+      UNIQUE(category, subcategory, source, effective_from)
+  ) STRICT;
+
+  CREATE INDEX IF NOT EXISTS idx_coefficients_active ON carbon_coefficients(category, subcategory, effective_to);
+  ```
+
+  ### 4. Create shared library modules in `netlify/functions/_lib/`
+
+  **`db.js`** — Turso client singleton:
+  ```javascript
+  import { createClient } from '@tursodatabase/serverless';
+
+  let _db;
+
+  export function getDb() {
+    if (!_db) {
+      _db = createClient({
+        url: process.env.TURSO_DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      });
+    }
+    return _db;
+  }
+  ```
+
+  **Note:** Uses `@tursodatabase/serverless` (fetch-based, no native deps). If API compatibility issues arise, switch to `@tursodatabase/serverless/compat` which mimics `@libsql/client` interface.
+
+  **`response.js`** — Shared response helpers:
+  ```javascript
+  export function json(data, status = 200) {
+    return new Response(JSON.stringify(data), {
+      status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      },
+    });
+  }
+
+  export function error(message, status = 400) {
+    return json({ success: false, error: message }, status);
+  }
+
+  export function cors() {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      },
+    });
+  }
+  ```
+
+  **`auth.js`** — User identity from header:
+  ```javascript
+  export function getCurrentUserId(request) {
+    return request.headers.get('x-user-id') || 'u_alice';
+  }
+  ```
+
+  ### 5. Create `.env.example` at project root
+
+  ```
+  TURSO_DATABASE_URL=libsql://your-db-name-your-org.turso.io
+  TURSO_AUTH_TOKEN=your-auth-token
+  ZHIPUAI_API_KEY=your-zhipuai-key
+  ```
+
+  ### Verification
+
+  After completing all steps, verify:
+  - `package.json` exists and `node_modules/` is populated
+  - `netlify.toml` exists with correct redirect order
+  - `netlify/functions/_lib/schema.sql` has all 5 tables with indexes
+  - `netlify/functions/_lib/db.js` exports `getDb()`
+  - `netlify/functions/_lib/response.js` exports `json()`, `error()`, `cors()`
+  - `netlify/functions/_lib/auth.js` exports `getCurrentUserId()`
+  - `.env.example` lists all required env vars

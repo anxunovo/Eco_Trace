@@ -1,0 +1,71 @@
+  ## Task: Update impact.js to fetch carbon dashboard data from API
+
+  ### Context
+  - `new-site/public/assets/pages/impact.js` shows carbon reduction dashboard with per-category charts
+  - Currently computes everything from `state.carbonRecords` (localStorage)
+  - `GET /api/carbon/stats?scope=global` returns: `{ totalCarbonSavedKg, listingCount, byCategory: [{category, total}] }`
+  - The page also shows `totalFoodSavedKg`, `activeStudents` — these may need to stay as local computations or be added to API later
+
+  ### Read first
+  Read `new-site/public/assets/pages/impact.js` to understand current computed properties and chart data.
+
+  ### What to change
+
+  1. Add imports:
+  ```javascript
+  import { fetchCarbonStats, isApiMode } from '../api-adapter.js';
+  ```
+
+  2. Add API data loading:
+  ```javascript
+  const apiStats = ref(null);
+
+  (async () => {
+    try {
+      if (await isApiMode()) {
+        const stats = await fetchCarbonStats('global');
+        if (stats) apiStats.value = stats;
+      }
+    } catch {}
+  })();
+  ```
+
+  3. Create computed properties that merge API data with local:
+  ```javascript
+  const perCategory = computed(() => {
+    if (apiStats.value?.byCategory) {
+      // Use API category data, merge with CATEGORY_MAP for labels/icons
+      return apiStats.value.byCategory.map(item => ({
+        key: item.category,
+        label: CATEGORY_MAP[item.category]?.label || item.category,
+        icon: CATEGORY_MAP[item.category]?.icon || '📦',
+        kg: round1(item.total),
+        count: 0, // API doesn't return count per category
+      })).sort((a, b) => b.kg - a.kg);
+    }
+    // Fallback to existing local computation
+    return /* existing local logic */;
+  });
+
+  const totalCarbon = computed(() =>
+    apiStats.value?.totalCarbonSavedKg ?? totalCarbonSaved.value
+  );
+
+  const totalItems = computed(() =>
+    apiStats.value?.listingCount ?? totalCompleted.value
+  );
+  ```
+
+  4. Update template references where needed.
+
+  ### Rules
+  - Keep existing local computation as fallback
+  - CATEGORY_MAP from seed.js has labels and icons for each category
+  - Do NOT modify chart rendering logic — only change data sources
+  - `totalFoodSavedKg` and `activeStudents` can remain as local computations (API doesn't provide them yet)
+
+  ### Verification
+  1. `netlify dev` running
+  2. Open /impact → should show carbon stats from API
+  3. Category breakdown should match API response
+  4. Stop `netlify dev` → dashboard still works with local data

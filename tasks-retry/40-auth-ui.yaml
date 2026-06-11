@@ -1,0 +1,47 @@
+title: "EcoTrace: Frontend login/register UI"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Create login/register modal for EcoTrace
+
+  Backend already works:
+  - POST /api/auth/register { nickname, password } → { token, user }
+  - POST /api/auth/login { nickname, password } → { token, user }
+  - GET /api/auth/me (Authorization: Bearer <token>) → { user }
+  - api-adapter.js already exports: register(), login(), getMe(), logout(), getToken(), setToken()
+
+  ### Changes needed:
+
+  1. Create `new-site/public/assets/pages/auth.js` — Vue component with:
+     - Modal overlay with login/register tabs
+     - Register form: nickname (2-20 chars), password (min 4 chars), confirm password
+     - Login form: nickname, password
+     - Call `register()` or `login()` from api-adapter.js
+     - On success: store token (already done by api-adapter), emit 'auth-success' event, close modal
+     - Show error messages from API (e.g. "该昵称已被注册", "昵称或密码错误")
+     - Chinese UI labels, green-leaf color scheme (leaf-500 = #3f9451)
+
+  2. Add to `new-site/public/assets/components.js`:
+     - Export `AuthModal` component that wraps auth.js
+     - Show/hide via v-model boolean
+
+  3. Update `new-site/public/assets/app.js`:
+     - Add auth state: `isAuthenticated` reactive, `currentUser` from API
+     - On app mount: call `getMe()` to restore session from localStorage token
+     - If token expired → show AuthModal
+     - Add Navbar "登录/注册" button when not authenticated
+     - Add Navbar user display + "退出" button when authenticated
+
+  4. Update `new-site/public/assets/components.js` Navbar:
+     - Show user avatar + nickname when logged in
+     - Show "登录" button when not logged in
+     - On logout: call `logout()`, clear state
+
+  **Verification:**
+  - Open site → see "登录" in navbar
+  - Click → register new user (e.g. "testuser", password "1234")
+  - Auto-login, see nickname in navbar
+  - Refresh page → session restored from localStorage token
+  - Logout → back to "登录" button

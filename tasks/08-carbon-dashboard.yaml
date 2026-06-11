@@ -1,0 +1,49 @@
+title: "EcoTrace: Carbon Dashboard API — aggregation endpoints"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Carbon Dashboard aggregation endpoints
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/dashboard.mjs`
+
+  Endpoint: `GET /api/dashboard`
+  - `config.path = '/api/dashboard'`
+  - Query param `userId` (optional, for personal stats)
+
+  Return JSON with:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "totalCarbonSaved": 123.4,
+      "totalCompletedListings": 45,
+      "totalFoodSaved": 12,
+      "byCategory": {
+        "BOOKS": { "carbon": 23.4, "count": 8 },
+        "CLOTHING": { "carbon": 56.0, "count": 12 },
+        ...
+      },
+      "recentRecords": [...last 10 carbon_records with listing title],
+      "userStats": {
+        "myCarbon": 15.2,
+        "myRank": 3,
+        "myCompletedListings": 5
+      },
+      "leaderboard": [
+        { "userId": "u_alice", "nickname": "Alice", "carbon": 25.3, "rank": 1 },
+        ...
+      ]
+    }
+  }
+  ```
+
+  Use SQL aggregation queries:
+  - `SELECT category, SUM(carbon_saved_kg) as carbon, COUNT(*) as count FROM carbon_records GROUP BY category`
+  - `SELECT user_id, SUM(carbon_saved_kg) as total FROM carbon_records GROUP BY user_id ORDER BY total DESC LIMIT 10` for leaderboard
+  - Join with users table for nicknames
+
+  Use `getDb()`, `json()`/`error()`, `getCurrentUserId()`.

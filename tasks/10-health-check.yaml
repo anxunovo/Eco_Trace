@@ -1,0 +1,37 @@
+title: "EcoTrace: Health Check + API Info endpoint"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Health Check endpoint
+
+  ### Create `netlify/functions/health.mjs`
+
+  Endpoint: `GET /api/health`
+  - `config.path = '/api/health'`
+  - No auth required
+  - Return:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "status": "ok",
+      "version": "1.0.0",
+      "endpoints": [
+        "/api/listings",
+        "/api/listings/:id",
+        "/api/listings/:id/complete",
+        "/api/interests",
+        "/api/carbon",
+        "/api/dashboard",
+        "/api/user",
+        "/api/users",
+        "/api/ai/analyze",
+        "/api/admin/listings",
+        "/api/health"
+      ]
+    }
+  }
+  ```
+  - Also test Turso connection: try `SELECT 1` and include `"database": "connected"` or `"database": "error"` in response

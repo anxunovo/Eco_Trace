@@ -1,0 +1,43 @@
+title: "EcoTrace: Frontend me.js + me-listings.js + admin.js — integrate API"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update me.js, me-listings.js, and admin.js to use API
+
+  Read these files to understand current implementation:
+  - `new-site/public/assets/pages/me.js`
+  - `new-site/public/assets/pages/me-listings.js`
+  - `new-site/public/assets/pages/admin.js`
+
+  Read `new-site/public/assets/api-adapter.js` — it exports:
+  - `fetchUserProfile()` — GET /api/user/profile
+  - `fetchListings(params)` — GET /api/listings (with filters)
+  - `updateListing(id, patch)` — PUT /api/listings/update?id=xxx
+  - `deleteListing(id)` — DELETE /api/listings/delete?id=xxx
+  - `completeListing(id)` — POST /api/listings/:id/complete
+  - `isApiMode()` — returns true if API is available
+
+  ### Changes to me.js:
+  1. Import `isApiMode, fetchUserProfile` from api-adapter
+  2. On mount, if API available, fetch user profile from API instead of localStorage
+  3. Display API-returned user data (nickname, eco_points, listing count)
+
+  ### Changes to me-listings.js:
+  1. Import `isApiMode, fetchListings, updateListing, deleteListing, completeListing` from api-adapter
+  2. On mount, if API available, fetch user's listings from API: `fetchListings({ status: filter })`
+  3. "下架" action calls `deleteListing(id)` via API
+  4. "确认完成" action calls `completeListing(id)` via API
+  5. Keep localStorage fallback
+
+  ### Changes to admin.js:
+  1. Import `isApiMode, fetchListings, deleteListing` from api-adapter
+  2. On mount, if API available, fetch all listings from API (no owner filter)
+  3. "下架" action calls `deleteListing(id)` via API
+  4. Keep localStorage fallback
+
+  **Verification:**
+  - me.js shows user profile from API when available
+  - me-listings.js shows user's listings, actions work via API
+  - admin.js shows all listings, remove works via API

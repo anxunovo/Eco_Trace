@@ -1,0 +1,34 @@
+title: "EcoTrace: Frontend home.js — add API for latest listings + stats"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update home.js to optionally fetch data from API
+
+  Read `new-site/public/assets/pages/home.js`.
+
+  ### Changes:
+
+  1. On page mount, if API is available:
+     - Fetch latest listings from `/api/listings?limit=8&status=ACTIVE`
+     - Fetch dashboard stats from `/api/dashboard` for the hero section stats cards
+  2. Use API data if available, otherwise keep using existing store.state.listings and store.state.carbonRecords
+
+  ```javascript
+  async function loadApiData() {
+    try {
+      const { api } = await import('../api-adapter.js');
+      if (await api.isApiAvailable()) {
+        const [listings, dashboard] = await Promise.all([
+          api.getListings({ limit: 8, status: 'ACTIVE' }),
+          api.getDashboard(),
+        ]);
+        return { listings, dashboard };
+      }
+    } catch {}
+    return null;
+  }
+  ```
+
+  **Important:** This is purely additive. If API is down, home page works exactly as before using localStorage data.

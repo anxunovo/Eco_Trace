@@ -1,0 +1,24 @@
+title: "EcoTrace: Frontend me.js + me-listings.js — add API for user data"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update me.js and me-listings.js to use API
+
+  Read `new-site/public/assets/pages/me.js` and `new-site/public/assets/pages/me-listings.js`.
+
+  ### me.js changes:
+
+  1. When DataSource is 'api', fetch user profile from `/api/user`
+  2. User switching: call `/api/user/switch` when switching identity
+  3. Data reset: call `/api/admin/reset` when admin resets data (instead of localStorage.clear())
+
+  ### me-listings.js changes:
+
+  1. When DataSource is 'api', fetch user's listings from `/api/listings?ownerId=xxx` or filter client-side from `/api/listings`
+  2. Complete listing: use `/api/listings/:id/complete`
+  3. Edit listing: existing edit flow works (navigates to /publish?edit=l_xxx)
+  4. Remove listing: use `DELETE /api/listings/:id` (soft delete)
+
+  **Important:** All existing UI and localStorage logic stays intact. API is additive fallback.

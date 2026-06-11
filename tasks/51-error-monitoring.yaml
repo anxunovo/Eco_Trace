@@ -1,0 +1,63 @@
+title: "EcoTrace: Error monitoring setup"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Set up error monitoring for production
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site is live at https://stu-eco-trace.netlify.app
+  - Need to monitor errors in production to catch issues early
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Evaluate error monitoring options**:
+     - Research Sentry, LogRocket, or similar services
+     - Consider free tier options for MVP
+     - Evaluate integration complexity with Vue 3 SPA
+     - Consider Netlify native error logging
+
+  2. **Implement chosen error monitoring**:
+     - Set up account with chosen service
+     - Integrate SDK into Vue 3 app
+     - Configure error capturing for frontend errors
+     - Set up API error tracking
+     - Configure user context (user ID, session info)
+
+  3. **Configure alerts**:
+     - Set up email alerts for critical errors
+     - Configure error rate thresholds
+     - Set up Slack notifications if available
+     - Configure error grouping and deduplication
+
+  4. **Test error monitoring**:
+     - Intentionally trigger a frontend error
+     - Verify error is captured and reported
+     - Test API error tracking
+     - Verify user context is captured
+
+  5. **Document monitoring setup**:
+     - Add error monitoring setup to DEPLOY.md
+     - Document how to access error reports
+     - Include alert configuration details
+     - Document how to add team members to monitoring
+
+  6. **Set up performance monitoring** (optional):
+     - Configure performance metrics tracking
+     - Set up Core Web Vitals monitoring
+     - Configure slow endpoint alerts
+
+  ### Verification
+  1. Error monitoring service is integrated
+  2. Frontend errors are captured and reported
+  3. API errors are tracked
+  4. Alerts are configured and working
+  5. Setup is documented
+
+  ### Deliverables
+  - Error monitoring integration in codebase
+  - Updated DEPLOY.md with monitoring setup
+  - Error monitoring dashboard configured

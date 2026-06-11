@@ -1,0 +1,19 @@
+title: "EcoTrace: Frontend admin.js — add API for admin management"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update admin.js to use API for admin operations
+
+  Read `new-site/public/assets/pages/admin.js`.
+
+  ### Changes:
+
+  1. When DataSource is 'api':
+     - Fetch all listings from `/api/admin/listings` (includes all statuses)
+     - Remove (下架) listing: call `PUT /api/admin/listings/:id/remove`
+     - Reset data: call `POST /api/admin/reset`
+  2. Show a "数据来源" indicator
+
+  **Important:** Keep existing admin UI and functionality intact. API is additive.

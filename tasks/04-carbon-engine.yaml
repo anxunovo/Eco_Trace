@@ -1,0 +1,107 @@
+title: "EcoTrace: Carbon Estimation Engine + Seed Coefficients"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Dual-Channel Carbon Estimation Engine
+
+  This task depends on Task 01 (foundation). Assume `netlify/functions/_lib/` exists with `db.js`.
+
+  ### Create `netlify/functions/_lib/carbon-engine.js`
+
+  Pure function module for carbon estimation. Must work as both:
+  1. Standalone import by API endpoints
+  2. Testable with direct function calls
+
+  ```javascript
+  /**
+   * Estimate carbon savings for a completed listing.
+   *
+   * Dual-channel model:
+   * - Channel 1 (per_kg): weight_kg × emission_factor × substitution_rate
+   * - Channel 2 (per_item): emission_factor × substitution_rate
+   *
+   * Emission factors sourced from CLCD (China), ecoinvent (international), IPCC (food).
+   * All results rounded to 1 decimal place.
+   */
+
+  export function estimateCarbon({ category, weightKg, foodType, foodWeightKg, coefficients }) {
+    // coefficients is array from carbon_coefficients table
+    // Find the active coefficient for this category
+
+    if (category === 'FOOD' && foodType && foodWeightKg) {
+      // Food uses subcategory-specific factors
+      const coeff = coefficients.find(c =>
+        c.category === 'FOOD' && c.subcategory === foodType && !c.effective_to
+      );
+      if (!coeff) return { kg: 0, source: 'none', note: 'No food coefficient found' };
+      const kg = round1(foodWeightKg * coeff.factor * coeff.substitution_rate);
+      return { kg, source: coeff.source, note: coeff.note, coefficientId: coeff.id };
+    }
+
+    const coeff = coefficients.find(c =>
+      c.category === category && !c.subcategory && !c.effective_to
+    );
+    if (!coeff) return { kg: 0, source: 'none', note: 'No coefficient found' };
+
+    if (coeff.mode === 'per_kg') {
+      const w = weightKg || coeff.default_weight_kg || 1.0;
+      const kg = round1(w * coeff.factor * coeff.substitution_rate);
+      return { kg, source: coeff.source, note: coeff.note, coefficientId: coeff.id };
+    }
+
+    // per_item
+    const kg = round1(coeff.factor * coeff.substitution_rate);
+    return { kg, source: coeff.source, note: coeff.note, coefficientId: coeff.id };
+  }
+
+  function round1(n) { return Math.round(n * 10) / 10; }
+  ```
+
+  ### Create seed data: `netlify/functions/_lib/seed-carbon-coefficients.js`
+
+  Export an array of carbon coefficient rows to INSERT into `carbon_coefficients` table:
+
+  ```javascript
+  export const SEED_CARBON_COEFFICIENTS = [
+    // Books — per kg, CLCD-based
+    { category: 'BOOKS', subcategory: null, mode: 'per_kg', factor: 1.3, substitution_rate: 0.7, default_weight_kg: 0.8, source: 'CLCD', source_ref: 'paper-pulp-production', note: 'Paper/pulp production emissions, 70% reuse substitution' },
+    // Clothing — per item, ecoinvent
+    { category: 'CLOTHING', subcategory: null, mode: 'per_item', factor: 8.0, substitution_rate: 0.7, default_weight_kg: null, source: 'ecoinvent', source_ref: 'garment-production-average', note: 'Average garment production, 70% reuse substitution' },
+    // Electronics — per item, ecoinvent
+    { category: 'ELECTRONICS', subcategory: null, mode: 'per_item', factor: 25.0, substitution_rate: 0.6, default_weight_kg: null, source: 'ecoinvent', source_ref: 'consumer-electronics-avg', note: 'Consumer electronics average, 60% reuse substitution' },
+    // Daily用品 — per kg
+    { category: 'DAILY用品', subcategory: null, mode: 'per_kg', factor: 2.0, substitution_rate: 0.65, default_weight_kg: 0.5, source: 'CLCD', source_ref: 'plastic-product-avg', note: 'Daily plastic/household goods, 65% reuse substitution' },
+    // Sports — per item
+    { category: 'SPORTS', subcategory: null, mode: 'per_item', factor: 5.0, substitution_rate: 0.7, default_weight_kg: null, source: 'ecoinvent', source_ref: 'sporting-goods-avg', note: 'Sporting goods average, 70% reuse substitution' },
+    // Stationery — per kg
+    { category: 'STATIONERY', subcategory: null, mode: 'per_kg', factor: 1.5, substitution_rate: 0.8, default_weight_kg: 0.3, source: 'CLCD', source_ref: 'paper-product-avg', note: 'Paper/stationery products, 80% reuse substitution' },
+    // Dorm supplies — per kg
+    { category: 'DORM_SUPPLIES', subcategory: null, mode: 'per_kg', factor: 2.5, substitution_rate: 0.65, default_weight_kg: 1.0, source: 'CLCD', source_ref: 'household-goods-avg', note: 'Dormitory household goods, 65% reuse substitution' },
+    // Other — per kg
+    { category: 'OTHER', subcategory: null, mode: 'per_kg', factor: 1.5, substitution_rate: 0.5, default_weight_kg: 0.5, source: 'custom', source_ref: 'conservative-default', note: 'Conservative default for uncategorized items' },
+    // Food subcategories — IPCC-based
+    { category: 'FOOD', subcategory: 'COMMON', mode: 'per_kg', factor: 2.5, substitution_rate: 1.0, default_weight_kg: null, source: 'IPCC', source_ref: 'food-waste-emissions', note: 'Common food waste emissions per kg' },
+    { category: 'FOOD', subcategory: 'MEAT', mode: 'per_kg', factor: 8.0, substitution_rate: 1.0, default_weight_kg: null, source: 'IPCC', source_ref: 'meat-production-emissions', note: 'Meat production emissions per kg' },
+    { category: 'FOOD', subcategory: 'VEG', mode: 'per_kg', factor: 0.8, substitution_rate: 1.0, default_weight_kg: null, source: 'IPCC', source_ref: 'vegetable-production', note: 'Vegetable production emissions per kg' },
+    { category: 'FOOD', subcategory: 'SNACK', mode: 'per_kg', factor: 2.0, substitution_rate: 1.0, default_weight_kg: null, source: 'IPCC', source_ref: 'processed-food-emissions', note: 'Processed snack food emissions per kg' },
+  ];
+  ```
+
+  ### Create `netlify/functions/carbon.mjs`
+
+  Endpoint: `GET/POST /api/carbon`
+  - `config.path = '/api/carbon'`
+  - POST: `{ category, weightKg, foodType, foodWeightKg }` → returns `{ success, data: { kg, source, note } }`
+  - GET: returns dashboard aggregation — total carbon saved, by category, recent records
+
+  ### Verification
+
+  After implementation:
+  - `_lib/carbon-engine.js` exports `estimateCarbon()` as pure function
+  - `_lib/seed-carbon-coefficients.js` exports 12 coefficient rows
+  - `carbon.mjs` handles POST estimation and GET dashboard
+  - `estimateCarbon({ category: 'BOOKS', weightKg: 1.0, coefficients: [...] })` returns correct value
+  - All results rounded to 1 decimal place
+  - Food subcategories handled separately from main categories

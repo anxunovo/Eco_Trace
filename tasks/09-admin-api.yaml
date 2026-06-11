@@ -1,0 +1,33 @@
+title: "EcoTrace: Admin API — manage all listings, remove violations"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Admin API endpoints
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/admin.mjs`
+
+  Endpoint: `GET /api/admin/listings`
+  - `config.path = '/api/admin/listings'`
+  - Check current user is ADMIN (query users table for role)
+  - If not ADMIN, return 403
+  - Return all listings across all statuses, with owner nickname
+  - Support query params: `status`, `page`, `limit`
+
+  Endpoint: `PUT /api/admin/listings/:id/remove`
+  - `config.path = '/api/admin/listings/:id/remove'`
+  - Check current user is ADMIN
+  - Set listing status to 'REMOVED'
+  - Return updated listing
+
+  Endpoint: `POST /api/admin/reset`
+  - `config.path = '/api/admin/reset'`
+  - Check current user is ADMIN
+  - Delete all data from all tables
+  - Re-seed with seed data (call the seed endpoint logic or re-insert inline)
+  - Return `{ success: true, message: 'Data reset complete' }`
+
+  Use `getDb()`, `json()`/`error()`, `getCurrentUserId()`.

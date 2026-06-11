@@ -1,0 +1,76 @@
+title: "EcoTrace: Content moderation system design"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Design content moderation system
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site is live with user-generated content
+  - Need to prevent spam, inappropriate content, and abuse
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Analyze moderation requirements**:
+     - Identify content types that need moderation (listings, descriptions, images)
+     - Define content policies (what's allowed, what's not)
+     - Determine moderation workflow (auto vs manual)
+     - Define escalation procedures for violations
+
+  2. **Design automated moderation**:
+     - Implement keyword filtering for inappropriate content
+     - Add profanity detection (use existing library)
+     - Implement image moderation (use AI service like AWS Rekognition)
+     - Set up spam detection (rate limiting, pattern matching)
+     - Design flagging system for user reports
+
+  3. **Design manual moderation workflow**:
+     - Create admin panel for moderation queue
+     - Implement approve/reject workflow
+     - Add bulk moderation tools
+     - Design moderation history tracking
+     - Set up moderator roles and permissions
+
+  4. **Implement reporting system**:
+     - Add "Report" button on listings
+     - Create report submission form
+     - Implement report categorization (spam, inappropriate, etc.)
+     - Set up notification system for new reports
+     - Design report resolution tracking
+
+  5. **Create content policy documentation**:
+     - Write user-facing content policy
+     - Create moderator guidelines
+     - Document escalation procedures
+     - Define appeal process for users
+
+  6. **Implement moderation features**:
+     - Add content filtering to publish.js
+     - Implement image moderation in AI analysis
+     - Create moderation API endpoints
+     - Add moderation status to listing model
+     - Implement content status (pending, approved, rejected, flagged)
+
+  7. **Test moderation system**:
+     - Test keyword filtering
+     - Test image moderation
+     - Test manual moderation workflow
+     - Test reporting system
+     - Verify notifications work
+
+  ### Verification
+  1. Content policy is documented
+  2. Automated moderation filters work
+  3. Manual moderation workflow is functional
+  4. Reporting system is operational
+  5. Moderation features are integrated
+
+  ### Deliverables
+  - docs/CONTENT-POLICY.md with user guidelines
+  - docs/MODERATION-GUIDELINES.md for moderators
+  - Moderation system implementation
+  - Admin panel moderation queue
+  - Updated documentation

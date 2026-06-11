@@ -1,0 +1,35 @@
+title: "EcoTrace: Frontend impact.js — add API dashboard data"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update impact.js to fetch dashboard data from API
+
+  Read `new-site/public/assets/pages/impact.js` to understand current data loading.
+
+  ### Changes:
+
+  Add an API data source option to the impact page:
+
+  1. On page mount, check if API is available:
+  ```javascript
+  try {
+    const { api } = await import('../api-adapter.js');
+    if (await api.isApiAvailable()) {
+      const dashboard = await api.getDashboard({ userId: store.state.currentUserId });
+      // Use dashboard.byCategory for the chart
+      // Use dashboard.totalCarbonSaved for the hero stat
+      // Use dashboard.userStats for personal stats
+      // Use dashboard.leaderboard for rankings
+    }
+  } catch {
+    // Fall back to existing localStorage-based data
+  }
+  ```
+
+  2. If API data is available, use it for the dashboard stats and chart. Otherwise, keep using existing store.state.carbonRecords aggregation.
+
+  3. Add a small indicator showing data source: "数据来源: 云端" vs "数据来源: 本地"
+
+  **Important:** Do not break existing functionality. This is additive — if API fails, the page renders exactly as before.

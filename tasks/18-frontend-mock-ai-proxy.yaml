@@ -1,0 +1,71 @@
+title: "EcoTrace: Frontend mock-ai.js → API proxy wrapper"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Create API-backed AI module that wraps mock-ai.js
+
+  Read `new-site/public/assets/mock-ai.js` to understand the existing `analyzeListingImage` function signature.
+
+  ### Create `new-site/public/assets/ai-adapter.js`
+
+  This module tries the real API first, falls back to existing mock-ai.js:
+
+  ```javascript
+  import { analyzeListingImage as mockAnalyze } from './mock-ai.js';
+
+  const API_TIMEOUT = 8000;
+
+  export async function analyzeListingImage(input) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+      const userId = localStorage.getItem('tx.currentUserId') || 'u_alice';
+      const response = await fetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({
+          images: input.images || [],
+          title: input.title || '',
+          description: input.description || '',
+          category: input.category || '',
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error(`API ${response.status}`);
+
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error);
+
+      // Map API response to same format as mock-ai.js
+      const result = data.data;
+      return {
+        titleSuggestion: result.titleSuggestion || input.title,
+        category: result.category || input.category,
+        isFood: result.isFood || false,
+        condition: result.condition || 'UNKNOWN',
+        estimatedWeightKg: result.estimatedWeightKg || 1.0,
+        descriptionSuggestion: result.descriptionSuggestion || '',
+        estimatedCarbonSavedKg: result.estimatedCarbonSavedKg || 0,
+        confidence: result.confidence || 0,
+        assumptions: result.assumptions || ['AI服务不可用，使用默认值'],
+        foodInfoSuggestion: result.foodInfoSuggestion || null,
+        _source: 'api',
+      };
+    } catch (err) {
+      // Fallback to mock AI
+      console.warn('AI API unavailable, using mock:', err.message);
+      const result = await mockAnalyze(input);
+      result._source = 'mock';
+      return result;
+    }
+  }
+  ```
+
+  This preserves full backward compatibility — if API is down, mock AI still works.
+  The `_source` field lets the UI show whether AI result came from real API or mock.

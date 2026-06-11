@@ -1,0 +1,96 @@
+const BASE = process.env.API_URL || 'http://localhost:8888/api';
+
+let passed = 0;
+let failed = 0;
+
+async function test(name, fn) {
+  try {
+    await fn();
+    console.log(`  ✓ ${name}`);
+    passed++;
+  } catch (err) {
+    console.log(`  ✗ ${name}: ${err.message}`);
+    failed++;
+  }
+}
+
+async function request(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', 'X-User-Id': 'u_alice', ...options.headers };
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`${res.status}: ${data.error || 'Unknown error'}`);
+  return data;
+}
+
+// Run tests
+console.log('Running API integration tests...\n');
+
+// Health
+await test('GET /health returns ok', async () => {
+  const data = await request('/health');
+  if (data.data.status !== 'ok') throw new Error('Status not ok');
+});
+
+// Init DB
+await test('POST /init-db seeds data', async () => {
+  const data = await request('/init-db', { method: 'POST' });
+  if (!data.success) throw new Error('Init failed');
+});
+
+// Users
+await test('GET /users returns list', async () => {
+  const data = await request('/users');
+  if (!Array.isArray(data.data)) throw new Error('Not array');
+  if (data.data.length < 3) throw new Error('Too few users');
+});
+
+await test('GET /user returns current user', async () => {
+  const data = await request('/user');
+  if (data.data.id !== 'u_alice') throw new Error('Wrong user');
+});
+
+// Listings
+await test('GET /listings returns paginated results', async () => {
+  const data = await request('/listings');
+  if (!Array.isArray(data.data)) throw new Error('Not array');
+});
+
+await test('GET /listings?category=BOOKS filters by category', async () => {
+  const data = await request('/listings?category=BOOKS');
+  data.data.forEach(l => { if (l.category !== 'BOOKS') throw new Error('Wrong category'); });
+});
+
+await test('POST /listings creates a listing', async () => {
+  const data = await request('/listings', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: 'Test Book', category: 'BOOKS', description: 'A test book',
+      tradeMode: 'FREE', condition: 'GOOD', images: '[]', tags: '[]',
+    }),
+  });
+  if (!data.data.id) throw new Error('No ID returned');
+});
+
+// Search
+await test('GET /search?q=book returns results', async () => {
+  const data = await request('/search?q=book');
+  if (!Array.isArray(data.data)) throw new Error('Not array');
+});
+
+// Dashboard
+await test('GET /dashboard returns carbon stats', async () => {
+  const data = await request('/dashboard');
+  if (typeof data.data.totalCarbonSaved !== 'number') throw new Error('No totalCarbonSaved');
+});
+
+// Carbon estimate
+await test('POST /carbon returns estimate', async () => {
+  const data = await request('/carbon', {
+    method: 'POST',
+    body: JSON.stringify({ category: 'BOOKS', weightKg: 1.0 }),
+  });
+  if (typeof data.data.kg !== 'number') throw new Error('No kg value');
+});
+
+console.log(`\n${passed} passed, ${failed} failed`);
+process.exit(failed > 0 ? 1 : 0);

@@ -1,0 +1,69 @@
+title: "EcoTrace: SEO audit on production"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: SEO audit on production site
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site: https://stu-eco-trace.netlify.app
+  - Need to ensure the site is discoverable and ranks well
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Meta tags verification**:
+     - Check all pages have proper title tags
+     - Verify meta descriptions exist and are unique
+     - Check for Open Graph tags (og:title, og:description, og:image)
+     - Verify Twitter Card tags
+     - Check canonical URLs
+
+  2. **Sitemap verification**:
+     - Check if sitemap.xml exists at /sitemap.xml
+     - Verify sitemap includes all important pages
+     - Check sitemap is submitted to Google Search Console
+
+  3. **Robots.txt verification**:
+     - Check if robots.txt exists at /robots.txt
+     - Verify it allows indexing of important pages
+     - Check for proper disallow rules
+
+  4. **Structured data (Schema.org)**:
+     - Check for JSON-LD structured data
+     - Verify schema for listings (Product, Offer)
+     - Check for organization schema
+     - Verify breadcrumb schema
+
+  5. **Content SEO**:
+     - Check heading hierarchy (H1, H2, H3)
+     - Verify keyword usage in titles and descriptions
+     - Check image alt text
+     - Verify internal linking structure
+
+  6. **Technical SEO**:
+     - Check page load speed (already covered in performance audit)
+     - Verify mobile-friendliness (already covered in E2E)
+     - Check for broken links
+     - Verify HTTPS is enforced
+     - Check for 404 errors
+
+  7. **Social media optimization**:
+     - Verify social sharing works correctly
+     - Check Open Graph images display properly
+     - Test sharing on different platforms
+
+  ### Verification
+  1. All pages have unique title and meta description
+  2. Sitemap.xml exists and is valid
+  3. Robots.txt allows proper indexing
+  4. Structured data is present and valid
+  5. No broken internal links
+  6. Social sharing cards display correctly
+
+  ### Deliverables
+  - SEO audit report with recommendations
+  - List of SEO improvements to implement
+  - Update any SEO-related issues in documentation

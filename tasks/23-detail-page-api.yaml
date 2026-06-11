@@ -1,0 +1,29 @@
+title: "EcoTrace: Frontend listing-detail.js — add API data + interest submission"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update listing-detail.js to use API for data and interest submission
+
+  Read `new-site/public/assets/pages/listing-detail.js`.
+
+  ### Changes:
+
+  1. When DataSource is 'api', fetch listing detail from `/api/listings/:id` instead of searching localStorage
+  2. When user clicks "我想要" (express interest), send POST to `/api/interests` instead of only showing contact modal
+  3. When owner clicks "确认已流转" (complete listing), use `/api/listings/:id/complete` which creates the carbon record server-side
+
+  Pattern:
+  ```javascript
+  // Load listing
+  if (dataSource === 'api') {
+    const { api } = await import('../api-adapter.js');
+    const listing = await api.getListing(id);
+    // Use listing data for display
+  } else {
+    // ... existing localStorage lookup
+  }
+  ```
+
+  **Important:** Keep the ContactModal, FoodSafetyNotice, and all existing UI components intact. API integration is additive.

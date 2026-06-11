@@ -1,0 +1,54 @@
+title: "EcoTrace: Frontend listing-detail.js — integrate API for detail/interest/complete"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update listing-detail.js to use API for listing detail, interest submission, and complete flow
+
+  Read `new-site/public/assets/pages/listing-detail.js` to understand the current implementation.
+  Read `new-site/public/assets/api-adapter.js` — it already exports:
+  - `fetchListingDetail(id)` — GET /api/listing?id=xxx → { listing: {...} }
+  - `submitInterest(listingId, message)` — POST /api/interests?listingId=xxx
+  - `completeListing(id)` — POST /api/listings/:id/complete
+  - `isApiMode()` — returns true if API is available
+
+  ### Changes needed:
+
+  1. Add imports at top of listing-detail.js:
+  ```javascript
+  import { isApiMode, fetchListingDetail, submitInterest, completeListing } from '../api-adapter.js';
+  ```
+
+  2. In the listing computed/setup, add API mode check on mount:
+  ```javascript
+  const dataSource = ref('local');
+  const apiListing = ref(null);
+  onMounted(async () => {
+    dataSource.value = (await isApiMode()) ? 'api' : 'local';
+    if (dataSource.value === 'api') {
+      const res = await fetchListingDetail(route.params.id);
+      if (res?.listing) apiListing.value = res.listing;
+    }
+  });
+  ```
+
+  3. Update listing computed to prefer API data:
+  ```javascript
+  const listing = computed(() => {
+    if (apiListing.value) return apiListing.value;
+    return getListing(route.params.id);
+  });
+  ```
+
+  4. Update "我想要" / contact action to call submitInterest via API when in API mode
+
+  5. Update "确认已流转" action to call completeListing via API when in API mode, fallback to store.actions.completeListing for localStorage
+
+  6. Keep all existing localStorage logic as fallback
+
+  **Verification:**
+  - Detail page loads listing from API when available
+  - "我想要" submits interest via API
+  - "确认已流转" completes listing via API
+  - Fallback to localStorage when API unavailable

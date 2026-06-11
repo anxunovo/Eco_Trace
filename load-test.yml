@@ -1,0 +1,95 @@
+config:
+  target: "https://stu-eco-trace.netlify.app"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Baseline test (10 users)"
+    - duration: 30
+      arrivalRate: 50
+      name: "Stress test (50 users)"
+    - duration: 30
+      arrivalRate: 100
+      name: "Stress test (100 users)"
+  environments:
+    production:
+      target: "https://stu-eco-trace.netlify.app"
+
+scenarios:
+  - name: "Read-heavy workload (browsing listings)"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/listings"
+      - think: 2
+      - get:
+          url: "/api/listings?status=ACTIVE"
+      - think: 2
+      - get:
+          url: "/api/listings?category=BOOKS"
+  - name: "Mixed workload (auth and browsing)"
+    weight: 3
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            nickname: "u_alice"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 2
+      - get:
+          url: "/api/listings"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - think: 2
+      - get:
+          url: "/api/user"
+          headers:
+            Authorization: "Bearer {{ token }}"
+  - name: "Write workload (create listing)"
+    weight: 1
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            nickname: "u_alice"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 1
+      - post:
+          url: "/api/listings"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            title: "Load Test Item"
+            description: "Item created during load test"
+            category: "BOOKS"
+            tradeMode: "SALE"
+            price: 10
+            condition: "GOOD"
+            campus: "桑浦山校区"
+            locationText: "图"
+            contactMethod: "微信"
+            contactValue: "test"
+            images: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="]
+  - name: "AI Analysis Workload"
+    weight: 1
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            nickname: "u_alice"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 1
+      - post:
+          url: "/api/ai/analyze"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            images: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="]

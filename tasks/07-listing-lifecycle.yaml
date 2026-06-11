@@ -1,0 +1,35 @@
+title: "EcoTrace: Listing Lifecycle — complete, expire, remove"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement listing lifecycle endpoints
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/listing-complete.mjs`
+
+  Endpoint: `POST /api/listings/:id/complete`
+  - `config.path = '/api/listings/:id/complete'`
+  - Verify owner matches `getCurrentUserId()`
+  - Update listing: `status = 'COMPLETED'`, `completed_at = now()`
+  - Create a `carbon_record` in `carbon_records` table:
+    - id: `cr_` + random hex
+    - listing_id, user_id, category from listing
+    - carbon_saved_kg from listing's estimated_carbon_saved_kg
+    - source: 'LISTING_COMPLETED'
+    - is_food, weight_kg from listing
+  - Increment user's `eco_points` by a calculated amount (e.g., Math.round(carbon_saved_kg * 10))
+  - Return updated listing + carbon record
+
+  ### Create `netlify/functions/listing-expire.mjs`
+
+  Endpoint: `POST /api/listings/check-expiry`
+  - `config.path = '/api/listings/check-expiry'`
+  - Find all food listings (`is_food = 1`) with status ACTIVE
+  - Parse `food_info` JSON, check if `latestPickupTime` has passed
+  - Update expired listings: `status = 'EXPIRED'`
+  - Return count of expired listings
+
+  Use `getDb()`, `json()`/`error()`, `getCurrentUserId()`.

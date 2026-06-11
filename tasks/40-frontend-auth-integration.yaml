@@ -1,0 +1,208 @@
+title: "EcoTrace: Frontend Auth Integration — login/register page, store auth state, route guards, navbar update"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Add complete auth UI + integrate with existing auth API backend
+
+  ### Background
+  The backend auth API is fully working:
+  - `POST /api/auth/register` — register with {nickname, password} → returns {success, token, user}
+  - `POST /api/auth/login` — login with {nickname, password} → returns {success, token, user}
+  - `GET /api/auth/me` — with `Authorization: Bearer <token>` header → returns {success, user}
+  - Token is stored in localStorage key `tx.auth_token`
+  - `api-adapter.js` already has `register()`, `login()`, `getMe()`, `logout()`, `getToken()`, `setToken()` functions
+
+  The backend write endpoints (`listing-create`, `listing-update`, `listing-delete`, `listing-complete`, `interests`) now use `getAuthUser()` which resolves the user from the Bearer token.
+
+  ### What to build
+
+  #### 1. Create new file: `new-site/public/assets/pages/auth.js`
+  - A Vue 3 component (export default {}) with login/register form
+  - Toggle between "登录" and "注册" modes
+  - Fields: nickname (text input), password (password input)
+  - On submit: call the appropriate api-adapter function
+  - On success: store token (api-adapter handles this), redirect to `/`
+  - On error: show error message inline
+  - Import and use `MobileTopBar` from components.js for mobile header
+  - Use the same Tailwind + design language as other pages (rounded-2xl cards, leaf-500 green buttons, etc.)
+  - Simple clean design, no over-engineering
+
+  ```javascript
+  import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { register, login } from '../api-adapter.js';
+  import { toast, MobileTopBar } from '../components.js';
+  import { useDevice } from '../device.js';
+  import { authState } from '../store.js';
+  ```
+
+  #### 2. Modify: `new-site/public/assets/store.js`
+
+  Add auth state management alongside the existing localStorage system:
+
+  **Add at the top (after existing imports):**
+  ```javascript
+  import { getMe, isApiMode } from './api-adapter.js';
+  ```
+
+  **Add new reactive auth state (after the existing `state` reactive):**
+  ```javascript
+  export const authState = reactive({
+    user: null,        // { id, nickname, avatar, school, campus, role, eco_points } or null
+    loading: true,     // true while checking auth on startup
+  });
+  ```
+
+  **Add `isAuthenticated` computed:**
+  ```javascript
+  export const isAuthenticated = computed(() => !!authState.user);
+  ```
+
+  **Modify `currentUser` computed** — when authState.user exists, use it:
+  ```javascript
+  export const currentUser = computed(() =>
+    authState.user || state.users.find(u => u.id === state.currentUserId) || state.users[0]
+  );
+  ```
+
+  **Add `initAuth()` function:**
+  ```javascript
+  export async function initAuth() {
+    authState.loading = true;
+    const apiReady = await isApiMode();
+    if (!apiReady) {
+      authState.loading = false;
+      return;
+    }
+    const token = localStorage.getItem('tx.auth_token');
+    if (!token) {
+      authState.loading = false;
+      return;
+    }
+    try {
+      const res = await getMe();
+      if (res?.user) {
+        authState.user = res.user;
+        state.currentUserId = res.user.id;
+      }
+    } catch (e) {
+      // Token invalid/expired — clear it
+      localStorage.removeItem('tx.auth_token');
+    }
+    authState.loading = false;
+  }
+  ```
+
+  **Call `initAuth()` at the end of the module (after `syncFromApi()`):**
+  ```javascript
+  initAuth();
+  ```
+
+  **Add `setAuthUser` and `clearAuth` exports:**
+  ```javascript
+  export function setAuthUser(user) {
+    authState.user = user;
+    state.currentUserId = user.id;
+  }
+  export function clearAuth() {
+    authState.user = null;
+  }
+  ```
+
+  #### 3. Modify: `new-site/public/assets/app.js`
+
+  **Add the auth page import:**
+  ```javascript
+  import AuthPage from './pages/auth.js';
+  ```
+
+  **Add route (add to routes array, before the catch-all 404):**
+  ```javascript
+  { path: '/auth', component: AuthPage, meta: { title: '登录' } },
+  ```
+
+  **Add route guard (after router creation):**
+  ```javascript
+  import { isAuthenticated, authState } from './store.js';
+
+  const PROTECTED_ROUTES = ['/publish', '/me', '/admin'];
+
+  router.beforeEach((to) => {
+    if (authState.loading) return; // Still checking auth
+    if (PROTECTED_ROUTES.some(r => to.path.startsWith(r)) && !isAuthenticated.value) {
+      return { path: '/auth' };
+    }
+  });
+  ```
+
+  **IMPORTANT**: Import `isAuthenticated` and `authState` from store.js at the top of app.js.
+
+  #### 4. Modify: `new-site/public/assets/components.js`
+
+  **Update the Navbar component:**
+
+  Replace the current user dropdown (the "切换身份" demo feature) with auth-aware UI:
+
+  ```javascript
+  // In Navbar setup():
+  import { isAuthenticated, authState, clearAuth } from './store.js';
+  import { logout } from './api-adapter.js';
+
+  // Add logout handler:
+  function handleLogout() {
+    logout();
+    clearAuth();
+    toast('已退出登录');
+  }
+  ```
+
+  **Replace the user menu section in the template:**
+  - When authenticated: show avatar + nickname + "退出" dropdown
+  - When NOT authenticated: show "登录/注册" button that links to `/auth`
+
+  ```html
+  <!-- Authenticated -->
+  <div v-if="isAuthenticated" class="ml-auto relative shrink-0">
+    <button @click="toggle" class="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 text-sm">
+      <span class="text-lg leading-none">{{ authState.user?.avatar || '👤' }}</span>
+      <span class="hidden sm:inline">{{ authState.user?.nickname }}</span>
+      <span class="text-slate-400">▾</span>
+    </button>
+    <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+      <router-link to="/me" @click="close" class="block w-full text-left px-3 py-2.5 text-sm text-slate-700 hover:bg-leaf-50">个人中心</router-link>
+      <button @click="handleLogout(); close()" class="w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100">退出登录</button>
+    </div>
+  </div>
+  <!-- Guest -->
+  <router-link v-else to="/auth" class="ml-auto shrink-0 px-4 py-1.5 rounded-xl bg-leaf-500 text-white text-sm hover:bg-leaf-600">
+    登录 / 注册
+  </router-link>
+  ```
+
+  **Update MobileTabBar**: The "我的" tab should link to `/me` when authenticated, or `/auth` when not. The publish "+" button should also check auth.
+
+  #### 5. Modify: `new-site/public/assets/pages/me.js`
+
+  - Remove the "切换身份" demo feature (the `switchTo` function, `showSwitch`, the user list dropdown)
+  - Show real user data from `authState.user` or `currentUser`
+  - Add a "退出登录" button that calls `logout()` + `clearAuth()`
+  - Import `isAuthenticated`, `authState`, `clearAuth` from store.js
+  - Import `logout` from api-adapter.js
+  - If not authenticated, show a prompt to login with link to `/auth`
+
+  ### Design Rules
+  - Use the EXACT same visual language: `rounded-2xl`, `bg-leaf-500`, `text-leaf-700`, `border border-slate-200`
+  - Mobile responsive: use `useDevice()` hook and `isLayoutMobile` as other pages do
+  - Keep all existing functionality — auth is additive
+  - The old localStorage/seed-user system remains as fallback when API is unavailable
+  - Do NOT remove the `state.users` array or seed data loading — it's still needed for fallback
+
+  ### Verification
+  1. Open the site → should see "登录/注册" button in navbar (not seed user avatar)
+  2. Click "登录/注册" → register a new user → auto-redirect to home with avatar shown
+  3. Click "发布物品" while logged in → publish form works normally
+  4. Click "退出登录" → navbar shows "登录/注册" again
+  5. Click "发布物品" while NOT logged in → redirects to /auth
+  6. Login with seed user 李小雨 / demo1234 → shows correct profile

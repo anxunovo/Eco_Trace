@@ -1,0 +1,15 @@
+{
+  "name": "ecotrace",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "demo:static": "node scripts/static-demo.mjs",
+    "capture": "node scripts/capture-screenshots.js",
+    "test:local-demo": "node tests/local-demo-smoke.mjs",
+    "test:share-card": "node tests/share-card.test.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "playwright": "^1.52.0"
+  }
+}

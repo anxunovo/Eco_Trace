@@ -1,0 +1,40 @@
+title: "EcoTrace: CORS Preflight Handler — OPTIONS for all API endpoints"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Create CORS preflight handler
+
+  ### Update `netlify/functions/_lib/response.js`
+
+  Add a helper for handling OPTIONS preflight requests:
+
+  ```javascript
+  export function handleOptions(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+    return null;
+  }
+  ```
+
+  This should be called at the top of every function:
+
+  ```javascript
+  export default async (request) => {
+    const preflight = handleOptions(request);
+    if (preflight) return preflight;
+    // ... rest of handler
+  };
+  ```
+
+  Update all existing function files in `netlify/functions/` to include the OPTIONS handler if they don't already.

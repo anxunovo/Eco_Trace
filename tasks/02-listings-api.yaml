@@ -1,0 +1,55 @@
+title: "EcoTrace: Listings CRUD API — Netlify Functions"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Listings CRUD API as Netlify Functions
+
+  This task depends on Task 01 (foundation). Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/listings.mjs`
+
+  Endpoint: `GET/POST /api/listings`
+  - `config.path = '/api/listings'`
+  - GET: query params `category`, `status` (default ACTIVE), `page` (default 1), `limit` (default 20), `q` (search in title/description)
+  - Returns `{ success: true, data: [...], meta: { total, page, limit } }`
+  - POST: create new listing, validate required fields (title, category, owner_id from auth)
+  - Generate ID with pattern `l_` + random hex
+  - Set `created_at` and `updated_at` to `new Date().toISOString()`
+
+  ### Create `netlify/functions/listing.mjs`
+
+  Endpoint: `GET/PUT/DELETE /api/listings/:id`
+  - `config.path = '/api/listings/:id'` (Netlify extracts params from path)
+  - GET: return single listing by ID, 404 if not found
+  - PUT: update listing fields, set `updated_at`, verify owner matches `getCurrentUserId()`
+  - DELETE: soft delete — set `status = 'REMOVED'`, do not hard delete
+
+  ### Create `netlify/functions/seed.mjs`
+
+  Endpoint: `POST /api/seed`
+  - `config.path = '/api/seed'`
+  - Read seed data from `new-site/public/assets/seed.js` (parse the ES module to extract SEED_USERS, SEED_LISTINGS)
+  - OR: hardcode a minimal seed dataset inline (5 users, 12 listings matching the existing seed)
+  - Insert into Turso tables using `db.batch()` for atomicity
+  - Handle duplicates gracefully (INSERT OR IGNORE)
+  - Return `{ success: true, counts: { users: N, listings: N } }`
+
+  ### Key data model (from existing seed.js)
+
+  Users have: id, nickname, avatar, school, campus, role, ecoPoints, contactMethod, contactValue
+  Listings have: id, ownerId, title, description, category, tradeMode, price, swapWanted, condition, campus, locationText, images (JSON array), estimatedWeightKg, estimatedCarbonSavedKg, aiConfidence, aiAssumptions (JSON array), isFood, foodInfo (JSON or null), tags (JSON array), interestedCount, status, createdAt, updatedAt, completedAt
+
+  Categories: BOOKS, CLOTHING, ELECTRONICS, DAILY用品, SPORTS, FOOD, STATIONERY, DORM_SUPPLIES, OTHER
+
+  ### Verification
+
+  After implementation, verify:
+  - `netlify/functions/listings.mjs` handles GET with filters and POST with validation
+  - `netlify/functions/listing.mjs` handles GET/PUT/DELETE by ID
+  - `netlify/functions/seed.mjs` seeds the database
+  - All functions use `getDb()` from `_lib/db.js`
+  - All functions use `json()`/`error()` from `_lib/response.js`
+  - All functions use `getCurrentUserId()` from `_lib/auth.js`
+  - `export const config = { path: '/api/...' }` on each function

@@ -1,0 +1,85 @@
+title: "EcoTrace: store.js API sync — reactive state loads from backend when available"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Make store.js sync reactive state with API
+
+  ### Context
+  - `new-site/public/assets/store.js` manages all reactive state (listings, users, interests, carbonRecords)
+  - `new-site/public/assets/api-adapter.js` has `fetchListings()`, `fetchCarbonStats()`, `fetchUserProfile()`, etc. that auto-detect API availability
+  - When API is unavailable (static file server), api-adapter returns `null` and store falls back to localStorage
+  - The API is working: `GET /api/listings` returns 20 listings, `GET /api/carbon/stats` returns aggregated data
+
+  ### What to change in store.js
+
+  1. Import api-adapter at the top:
+  ```javascript
+  import { isApiMode, fetchListings, fetchUserProfile, fetchCarbonStats } from './api-adapter.js';
+  ```
+
+  2. Add an async `syncFromApi()` function:
+  ```javascript
+  export async function syncFromApi() {
+    const apiReady = await isApiMode();
+    if (!apiReady) return;
+
+    try {
+      const listings = await fetchListings({ limit: 50 });
+      if (listings?.listings) {
+        state.listings = listings.listings;
+        persist(); // keep localStorage in sync
+      }
+    } catch {}
+
+    try {
+      const stats = await fetchCarbonStats('global');
+      if (stats) {
+        // Rebuild carbonRecords from API stats if needed, or leave local
+      }
+    } catch {}
+  }
+  ```
+
+  3. Call `syncFromApi()` once after initialization:
+  ```javascript
+  initIfNeeded();
+  syncFromApi(); // fire and forget — updates state when API responds
+  ```
+
+  4. Modify `actions.createListing(draft)` to try API:
+  ```javascript
+  async createListing(draft) {
+    // Try API first
+    try {
+      const result = await createListingApi(draft);
+      if (result) {
+        // Refresh from API to get server-generated ID
+        await syncFromApi();
+        return state.listings.find(l => l.title === draft.title) || { id: result.id, ...draft };
+      }
+    } catch {}
+    // Fallback to existing localStorage logic
+    const now = new Date().toISOString();
+    const listing = { id: uid('l'), ownerId: state.currentUserId, status: draft.status || 'ACTIVE', interestedCount: 0, tags: draft.tags || [], createdAt: now, updatedAt: now, ...draft };
+    state.listings.unshift(listing);
+    persist();
+    return listing;
+  }
+  ```
+
+  5. Modify `actions.completeListing(id)` similarly — try API first, fallback to local.
+  6. Modify `actions.addInterest(listingId, message)` similarly.
+
+  ### Rules
+  - Do NOT remove any existing localStorage logic
+  - API calls are additive — wrapped in try/catch, failures silently fall back
+  - `state` remains reactive — Vue components re-render when API data arrives
+  - Import `createListing` from api-adapter as `createListingApi` to avoid name collision with the action
+
+  ### Verification
+  1. Run `netlify dev` in project root
+  2. Open browser → listings page should show data from API (check Network tab for `/api/listings` call)
+  3. Stop `netlify dev` → refresh → listings still show from localStorage (graceful fallback)
+  4. Publish a new listing while API is running → should appear in both API and local state

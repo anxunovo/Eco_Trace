@@ -1,0 +1,57 @@
+title: "EcoTrace: Netlify TOML — configure build, functions, SPA fallback"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Create optimized netlify.toml with proper SPA fallback
+
+  Create or update `netlify.toml` at project root. If it already exists, only update if needed.
+
+  ```toml
+  [build]
+    command = "echo 'No build step needed'"
+    functions = "netlify/functions"
+    publish = "new-site/public"
+
+  [functions]
+    node_bundler = "esbuild"
+    directory = "netlify/functions"
+
+  # SPA fallback — must be LAST redirect
+  # API functions use config.path, no redirect needed for /api/*
+  [[redirects]]
+    from = "/*"
+    to = "/index.html"
+    status = 200
+    conditions = { Role = ["none"] }
+
+  # Cache static assets
+  [[headers]]
+    for = "/assets/vendor/*"
+    [headers.values]
+      Cache-Control = "public, max-age=31536000, immutable"
+
+  [[headers]]
+    for = "/assets/seed-images/*"
+    [headers.values]
+      Cache-Control = "public, max-age=86400"
+
+  [[headers]]
+    for = "/assets/*.js"
+    [headers.values]
+      Cache-Control = "public, max-age=3600"
+
+  [[headers]]
+    for = "/assets/*.css"
+    [headers.values]
+      Cache-Control = "public, max-age=3600"
+  ```
+
+  Verify:
+  - `[build].publish` points to `new-site/public`
+  - `[build].functions` points to `netlify/functions`
+  - `[functions].node_bundler` is esbuild
+  - SPA catch-all redirect is present
+  - Cache headers for static assets
+  - No /api/* redirect (functions use config.path)

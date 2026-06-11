@@ -1,0 +1,25 @@
+title: "EcoTrace: Interests API — express interest in listings"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Interests API
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/interests.mjs`
+
+  Endpoint: `POST /api/interests`
+  - `config.path = '/api/interests'`
+  - Body: `{ listingId, message }`
+  - Create interest record with auto-generated ID (`i_` + random hex)
+  - Increment `interested_count` on the listing
+  - Return `{ success: true, data: { id, listingId, userId, message, createdAt } }`
+
+  Endpoint: `GET /api/interests?listingId=xxx`
+  - Query by listingId to get all interests for a listing
+  - Join with users table to include user nickname and avatar
+
+  Use `getDb()`, `json()`/`error()`, `getCurrentUserId()`.
+  Use `export const config = { path: '/api/interests' }`.

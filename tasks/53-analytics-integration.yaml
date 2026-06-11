@@ -1,0 +1,68 @@
+title: "EcoTrace: Analytics integration setup"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Set up analytics for production
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site is live at https://stu-eco-trace.netlify.app
+  - Need to track user behavior and key metrics
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Choose analytics solution**:
+     - Evaluate Google Analytics, Plausible, or similar
+     - Consider privacy-focused alternatives (no cookies, GDPR compliant)
+     - Evaluate free tier options
+     - Consider Netlify Analytics (built-in)
+
+  2. **Implement chosen analytics**:
+     - Set up account with chosen service
+     - Integrate tracking code into Vue 3 app
+     - Configure page view tracking
+     - Set up custom event tracking for key actions:
+       - User registration
+       - Listing creation
+       - Item transfer completion
+       - AI analysis usage
+       - Interest submissions
+
+  3. **Configure dashboards**:
+     - Create dashboard for key metrics
+     - Set up user acquisition tracking
+     - Configure engagement metrics
+     - Set up conversion funnels
+
+  4. **Privacy compliance**:
+     - Ensure analytics is GDPR compliant
+     - Add cookie consent banner if needed
+     - Document data retention policy
+     - Ensure user data is anonymized
+
+  5. **Test analytics**:
+     - Verify page views are tracked
+     - Test custom event tracking
+     - Verify real-time data appears in dashboard
+     - Test with different user flows
+
+  6. **Document analytics setup**:
+     - Add analytics setup to DEPLOY.md
+     - Document how to access analytics dashboard
+     - Document custom event tracking
+     - Include privacy compliance notes
+
+  ### Verification
+  1. Analytics is integrated and tracking
+  2. Custom events are tracked correctly
+  3. Dashboard shows expected data
+  4. Privacy compliance verified
+  5. Setup is documented
+
+  ### Deliverables
+  - Analytics integration in codebase
+  - Updated DEPLOY.md with analytics setup
+  - Analytics dashboard configured

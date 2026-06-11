@@ -1,0 +1,59 @@
+title: "EcoTrace: Frontend store.js DataSource — USE_API flag integration"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Modify store.js to support DataSource switching
+
+  Read `new-site/public/assets/store.js` carefully to understand the existing state management pattern.
+
+  ### Add USE_API flag to store.js
+
+  Add a `DataSource` switch that branches between localStorage (existing) and API (new):
+
+  1. Add at the top of store.js (after imports):
+  ```javascript
+  // DataSource: 'local' uses existing localStorage, 'api' uses backend
+  const DATA_SOURCE = localStorage.getItem('tx.dataSource') || 'local';
+
+  async function getDataSource() {
+    if (DATA_SOURCE === 'api') {
+      try {
+        const { api } = await import('./api-adapter.js');
+        const available = await api.isApiAvailable();
+        if (available) return 'api';
+      } catch {}
+    }
+    return 'local';
+  }
+  ```
+
+  2. For each action function (createListing, completeListing, fetchListings, etc.), add an API branch:
+
+  Example pattern for `createListing`:
+  ```javascript
+  async createListing(data) {
+    const ds = await getDataSource();
+    if (ds === 'api') {
+      const { api } = await import('./api-adapter.js');
+      const result = await api.createListing(data);
+      // Also update local state for reactivity
+      // ...existing localStorage update logic as fallback
+      return result;
+    }
+    // ...existing localStorage logic
+  }
+  ```
+
+  3. Add a `setDataSource` action:
+  ```javascript
+  setDataSource(source) {
+    localStorage.setItem('tx.dataSource', source);
+    location.reload(); // Refresh to apply new source
+  }
+  ```
+
+  **Important:** Do NOT remove any existing localStorage logic. The API branch is additive — if API fails, the existing code path still runs. All existing functionality must continue working when DataSource is 'local'.
+
+  This is the most critical frontend change. Be careful with the reactive state — Vue's reactivity must still work with both data sources.

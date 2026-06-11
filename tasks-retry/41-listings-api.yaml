@@ -1,0 +1,42 @@
+title: "EcoTrace: Frontend listings.js — integrate API search/filter/sort"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update listings.js to use API for search, filter, sort
+
+  Read `new-site/public/assets/pages/listings.js` to understand current filter/search logic.
+  Read `new-site/public/assets/api-adapter.js` — it already exports:
+  - `fetchListings(params)` — GET /api/listings?q=&category=&tradeMode=&campus=&status=&page=&limit=
+  - `isApiMode()` — returns true if API is available
+
+  ### Changes needed:
+
+  1. In listings.js, add API mode awareness:
+  ```javascript
+  import { isApiMode, fetchListings } from '../api-adapter.js';
+  ```
+
+  2. Add a `dataSource` reactive ref that checks API on mount:
+  ```javascript
+  const dataSource = ref('local');
+  onMounted(async () => {
+    dataSource.value = (await isApiMode()) ? 'api' : 'local';
+    if (dataSource.value === 'api') loadFromApi();
+  });
+  ```
+
+  3. Add `loadFromApi()` function that calls fetchListings with current filters and updates the display list
+
+  4. In the filter/search watch handler, if dataSource === 'api', call loadFromApi() instead of filtering localStorage data
+
+  5. Keep all existing localStorage filter logic intact as fallback
+
+  **Important:** The listings API returns `{ listings: [...], total, page, limit }` format.
+  Each listing has camelCase properties (ownerId, tradeMode, locationText, etc.) already mapped.
+
+  **Verification:**
+  - With API available: search/filter sends requests to API, results display correctly
+  - Without API (localStorage): existing behavior unchanged
+  - Pagination works with API (page/limit params)

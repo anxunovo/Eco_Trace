@@ -1,0 +1,26 @@
+title: "EcoTrace: Frontend publish.js — add DataSource awareness"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Update publish.js to use ai-adapter.js
+
+  Read `new-site/public/assets/pages/publish.js` to understand the current AI call.
+
+  ### Changes needed:
+
+  1. Change the import at the top of publish.js:
+  - Replace: `import { analyzeListingImage } from '../mock-ai.js'`
+  - With: `import { analyzeListingImage } from '../ai-adapter.js'`
+
+  The ai-adapter.js has the same function signature as mock-ai.js, so this is a one-line change. The adapter automatically tries the real API first, falls back to mock if unavailable.
+
+  2. Add a visual indicator when AI result comes from real API:
+  - After the AI call, check if `result._source === 'api'`
+  - If so, show a small green badge "AI识别" next to the AI confidence display
+  - If `_source === 'mock'`, show a yellow badge "模拟识别"
+
+  3. No other changes needed — the form structure, validation, and carbon recalculation all stay the same.
+
+  **Verification:** The publish form should work identically whether API is available or not. The only visible change is the AI source badge.

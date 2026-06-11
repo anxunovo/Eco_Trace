@@ -1,0 +1,35 @@
+title: "EcoTrace: User API — GET/PUT user profile, switch identity"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement User API endpoints
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/users.mjs`
+
+  Endpoint: `GET /api/users`
+  - `config.path = '/api/users'`
+  - GET: list all users (id, nickname, avatar, school, campus, role, ecoPoints)
+  - Query param `role` to filter by role (STUDENT/ADMIN)
+
+  ### Create `netlify/functions/user.mjs`
+
+  Endpoint: `GET/PUT /api/user`
+  - `config.path = '/api/user'`
+  - GET: return current user profile (from X-User-Id header)
+  - PUT: update current user profile fields (nickname, avatar, school, campus, contactMethod, contactValue)
+  - Update `updated_at` timestamp
+
+  ### Create `netlify/functions/user-switch.mjs`
+
+  Endpoint: `POST /api/user/switch`
+  - `config.path = '/api/user/switch'`
+  - Body: `{ userId }` — switch current user identity
+  - Validate userId exists in users table
+  - Return the switched user profile
+
+  All functions use `getDb()` from `_lib/db.js`, `json()`/`error()` from `_lib/response.js`, `getCurrentUserId()` from `_lib/auth.js`.
+  All use `export const config = { path: '/api/...' }` for routing.

@@ -1,0 +1,67 @@
+title: "EcoTrace: Load testing on production"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Load testing on production API
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site is live at https://stu-eco-trace.netlify.app
+  - Need to verify API can handle concurrent users
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Choose load testing tool**:
+     - Evaluate k6, Artillery, or similar tools
+     - Consider free tier options
+     - Test tool setup on a simple endpoint
+
+  2. **Define test scenarios**:
+     - Scenario 1: Read-heavy workload (browsing listings)
+     - Scenario 2: Write-heavy workload (creating listings)
+     - Scenario 3: Mixed workload (realistic usage)
+     - Define target concurrent users (e.g., 10, 50, 100)
+
+  3. **Create test scripts**:
+     - Script for GET /api/listings with filters
+     - Script for POST /api/listings/create
+     - Script for POST /api/auth/login
+     - Script for POST /api/ai/analyze
+     - Include realistic think times between requests
+
+  4. **Run baseline tests**:
+     - Test with 10 concurrent users
+     - Record response times, error rates
+     - Document baseline performance
+
+  5. **Run stress tests**:
+     - Test with 50 concurrent users
+     - Test with 100 concurrent users
+     - Monitor for errors and timeouts
+     - Record degradation points
+
+  6. **Analyze results**:
+     - Identify bottlenecks
+     - Check database query performance
+     - Verify rate limiting is working
+     - Document any issues found
+
+  7. **Document findings**:
+     - Create docs/LOAD-TESTING.md with results
+     - Include recommendations for scaling
+     - Document any infrastructure changes needed
+
+  ### Verification
+  1. Load testing tool is configured
+  2. Test scripts cover key API endpoints
+  3. Baseline performance documented
+  4. Stress tests identify bottlenecks
+  5. Findings documented
+
+  ### Deliverables
+  - Load testing scripts
+  - docs/LOAD-TESTING.md with results and recommendations
+  - Any infrastructure configuration changes

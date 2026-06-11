@@ -1,0 +1,27 @@
+{
+  "name": "碳循校园 · 校园二手漂流与碳减排估算",
+  "short_name": "碳循校园",
+  "description": "让校园里的闲置物品被看见、被带走、被再次使用。每一次流转都转化为减碳贡献。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f5ee",
+  "theme_color": "#3f9451",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "lifestyle"]
+}

@@ -1,0 +1,56 @@
+title: "EcoTrace: Database backup verification"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Database backup verification and setup
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Turso database is in production with user data
+  - Need to ensure database backups are working properly
+  - This can run in parallel with other audits
+
+  ### What to do
+
+  1. **Verify Turso backup configuration**:
+     - Check Turso dashboard for backup settings
+     - Verify automatic backups are enabled
+     - Check backup frequency and retention policy
+     - Document backup schedule in DEPLOY.md
+
+  2. **Test backup restoration**:
+     - Create a test database from backup
+     - Verify data integrity after restoration
+     - Test that all tables and relationships are preserved
+     - Verify user data is correctly restored
+
+  3. **Export backup script**:
+     - Create a script to export database to SQL
+     - Test the export script on production database
+     - Verify exported SQL can be imported
+     - Add script to project for manual backups
+
+  4. **Document backup procedures**:
+     - Create docs/BACKUP.md with backup procedures
+     - Include both automatic (Turso) and manual backup methods
+     - Document restoration procedures
+     - Include contact information for Turso support
+
+  5. **Test data migration**:
+     - Verify seed data can be re-run if needed
+     - Test database reset procedure
+     - Document how to reset database to initial state
+
+  ### Verification
+  1. Automatic backups are configured in Turso
+  2. Backup restoration test successful
+  3. Export/import script works correctly
+  4. Backup procedures documented
+  5. Database reset procedure tested
+
+  ### Deliverables
+  - docs/BACKUP.md with backup and restoration procedures
+  - Database export/import script (if applicable)
+  - Backup verification report

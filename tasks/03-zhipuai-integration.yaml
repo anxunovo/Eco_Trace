@@ -1,0 +1,106 @@
+title: "EcoTrace: ZhipuAI GLM-4.6V-Flash Integration"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement ZhipuAI GLM-4.6V-Flash AI Integration
+
+  This task depends on Task 01 (foundation). Assume `netlify/functions/_lib/` exists.
+
+  ### Important: Use GLM-4.6V-Flash (NOT GLM-4V-Flash)
+
+  GLM-4V-Flash does NOT support base64 images and only allows 1 image per request.
+  GLM-4.6V-Flash is also free, supports base64 + multiple images, 128K context.
+
+  ### Create `netlify/functions/_lib/ai-client.js`
+
+  ZhipuAI API wrapper:
+  - Endpoint: `https://open.bigmodel.cn/api/paas/v4/chat/completions`
+  - Auth: `Authorization: Bearer ${process.env.ZHIPUAI_API_KEY}`
+  - Model: `glm-4v-flash-plus` (GLM-4.6V-Flash)
+
+  ```javascript
+  export async function analyzeImages({ images, title, description, category }) {
+    // images is array of base64 data URLs
+    // Build multimodal message with content array:
+    // [{ type: 'text', text: prompt }, ...images.map(img => ({ type: 'image_url', image_url: { url: img } }))]
+
+    const prompt = `You are an AI assistant for a campus second-hand marketplace.
+    Analyze these images of an item and return a JSON object with:
+    - category: one of [BOOKS, CLOTHING, ELECTRONICS, DAILY用品, SPORTS, FOOD, STATIONERY, DORM_SUPPLIES, OTHER]
+    - isFood: boolean
+    - condition: one of [NEW, LIKE_NEW, GOOD, FAIR, UNKNOWN]
+    - estimatedWeightKg: number (your best estimate)
+    - titleSuggestion: string (improved title in Chinese)
+    - descriptionSuggestion: string (item description in Chinese, ~50 chars)
+    - foodInfoSuggestion: if isFood, { foodType: one of [COMMON, MEAT, VEG, SNACK], expiryDays: number }
+    - confidence: number 0-1
+    - assumptions: array of strings describing your reasoning
+
+    User provided: title="${title}", description="${description}", category="${category || 'auto'}"
+    Return ONLY valid JSON, no markdown.`;
+
+    const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.ZHIPUAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'glm-4v-flash-plus',
+        messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, ...images.map(url => ({ type: 'image_url', image_url: { url } }))] }],
+        temperature: 0.3,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`ZhipuAI API error ${response.status}: ${err}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    // Parse JSON from response, handle markdown code blocks
+    const jsonStr = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+    return JSON.parse(jsonStr);
+  }
+  ```
+
+  Add retry with exponential backoff (max 2 retries) on error codes 1302/1305 (rate limit).
+
+  ### Create `netlify/functions/ai-analyze.mjs`
+
+  Endpoint: `POST /api/ai/analyze`
+  - `config.path = '/api/ai/analyze'`
+  - Accept JSON body: `{ images: string[], title, description, category }`
+  - Images are base64 data URLs from the SPA
+  - Validate: at least 1 image, max 5 images, each < 4MB
+  - Call `analyzeImages()` from ai-client.js
+  - After getting AI result, calculate carbon estimate using carbon-engine (or simple inline formula for now):
+    - per_kg: weight × factor × substitution_rate
+    - per_item: factor × substitution_rate
+  - Return the AI result + estimated carbon saved
+
+  ### Fallback behavior
+
+  If ZhipuAI call fails or times out (>8 seconds), return a fallback result:
+  ```json
+  {
+    "category": "OTHER",
+    "condition": "UNKNOWN",
+    "estimatedWeightKg": 1.0,
+    "confidence": 0,
+    "assumptions": ["AI service unavailable, using defaults"],
+    "fallback": true
+  }
+  ```
+
+  ### Verification
+
+  After implementation:
+  - `_lib/ai-client.js` exports `analyzeImages()` with retry logic
+  - `ai-analyze.mjs` handles POST with validation
+  - Timeout protection: abort if >8 seconds
+  - Fallback returns valid JSON on failure
+  - Images validated for size and count before sending to API

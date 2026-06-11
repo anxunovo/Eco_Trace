@@ -1,0 +1,80 @@
+  ## Task: Update listing-detail.js to use API for detail, interest, and complete
+
+  ### Context
+  - `new-site/public/assets/pages/listing-detail.js` currently reads from `store.js` state
+  - API endpoints available:
+    - `GET /api/listings?id={id}` — not available, but `GET /api/listings` returns all with filters
+    - `GET /api/listing/detail?id={id}` — check the actual endpoint in `netlify/functions/listing-detail.mjs`
+    - `POST /api/interests` — express interest
+    - `POST /api/listing/complete` — mark listing as completed
+  - `new-site/public/assets/api-adapter.js` has `fetchListingDetail(id)`, `createListing()`, etc.
+
+  ### Read first
+  Read `netlify/functions/listing-detail.mjs` to find the actual endpoint path and query parameter format.
+  Read `netlify/functions/interests.mjs` to find the interest submission format.
+  Read the existing `listing-detail.js` page component.
+
+  ### What to change
+
+  1. Add import at top of listing-detail.js:
+  ```javascript
+  import { fetchListingDetail, isApiMode } from '../api-adapter.js';
+  ```
+
+  2. In `setup()`, add API data fetching:
+  ```javascript
+  const listing = ref(getListing(route.params.id));
+  const apiLoaded = ref(false);
+
+  // Try to load fresher data from API
+  (async () => {
+    try {
+      const apiReady = await isApiMode();
+      if (apiReady) {
+        const data = await fetchListingDetail(route.params.id);
+        if (data) {
+          listing.value = data;
+          apiLoaded.value = true;
+        }
+      }
+    } catch {}
+  })();
+  ```
+
+  3. When loading fails or returns null, keep the store-based listing.
+
+  4. Add API calls for interest and complete:
+  ```javascript
+  async function expressInterest() {
+    // Try API first
+    try {
+      const apiReady = await isApiMode();
+      if (apiReady) {
+        // Call interest API
+        await fetch('/api/interests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ listingId: route.params.id, message: '' }),
+        });
+      }
+    } catch {}
+    // Always update local state
+    actions.addInterest(route.params.id, '');
+  }
+  ```
+
+  5. Similarly for `completeListing` — try API first, then local.
+
+  ### Rules
+  - Keep existing store-based logic as fallback
+  - The page must work without API (static file server)
+  - If API returns data, use it (may have fresher counts, status, etc.)
+  - Do NOT break the existing template — ensure all referenced variables still exist
+
+  ### Verification
+  1. `netlify dev` running
+  2. Navigate to any listing detail page
+  3. Check Network tab for API call
+  4. Click "我想要" → interest should be recorded
+  5. Click "确认流转" → listing should be marked completed
+  6. All of above should also work when `netlify dev` is stopped

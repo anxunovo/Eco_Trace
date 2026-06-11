@@ -1,0 +1,43 @@
+title: "EcoTrace: Seed Data — SQL inserts matching existing seed.js"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Create SQL seed data file matching existing SPA seed data
+
+  ### Read the existing seed data
+  Read `new-site/public/assets/seed.js` to understand the existing SEED_USERS and SEED_LISTINGS data structures.
+
+  ### Create `netlify/functions/_lib/seed-data.js`
+
+  Export JavaScript objects containing all seed data as SQL-ready arrays:
+
+  ```javascript
+  export const SEED_USERS = [
+    { id: 'u_alice', nickname: 'Alice', avatar: '...', school: '汕头大学', campus: '本部', role: 'STUDENT', eco_points: 0, contact_method: 'wechat', contact_value: 'alice_wx' },
+    // ... all 5 seed users from seed.js
+  ];
+
+  export const SEED_LISTINGS = [
+    { id: 'l_001', owner_id: 'u_alice', title: '...', description: '...', category: 'BOOKS', ... },
+    // ... all 12 seed listings from seed.js
+  ];
+
+  export const SEED_CARBON_COEFFICIENTS = [
+    // ... all carbon coefficient rows
+  ];
+  ```
+
+  **Important:** Match ALL data from the existing `seed.js` file exactly — same IDs, same titles, same images, same categories, same prices, same everything. This ensures the seeded database produces the same demo experience as the localStorage version.
+
+  ### Create `netlify/functions/init-db.mjs`
+
+  Endpoint: `POST /api/init-db`
+  - `config.path = '/api/init-db'`
+  - Run schema.sql to create tables
+  - Insert all seed data using `db.batch()`
+  - Use `INSERT OR IGNORE` to handle re-runs
+  - Return counts of inserted rows
+
+  Use `getDb()`, `json()`/`error()`.

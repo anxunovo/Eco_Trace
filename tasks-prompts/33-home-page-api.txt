@@ -1,0 +1,59 @@
+  ## Task: Update home.js to fetch data from API
+
+  ### Context
+  - `new-site/public/assets/pages/home.js` is the landing page showing latest listings and carbon stats
+  - Currently reads from `store.js` state
+  - API endpoints:
+    - `GET /api/listings?limit=6` — latest listings
+    - `GET /api/carbon/stats?scope=global` — total carbon saved, listing count, per-category breakdown
+
+  ### Read first
+  Read `new-site/public/assets/pages/home.js` to understand the current data structure.
+
+  ### What to change
+
+  1. Add imports:
+  ```javascript
+  import { fetchListings, fetchCarbonStats, isApiMode } from '../api-adapter.js';
+  ```
+
+  2. Add API data loading in setup():
+  ```javascript
+  const apiListings = ref(null);
+  const apiStats = ref(null);
+
+  (async () => {
+    try {
+      if (await isApiMode()) {
+        const data = await fetchListings({ limit: 6 });
+        if (data?.listings) apiListings.value = data.listings;
+
+        const stats = await fetchCarbonStats('global');
+        if (stats) apiStats.value = stats;
+      }
+    } catch {}
+  })();
+  ```
+
+  3. Create computed properties that prefer API data:
+  ```javascript
+  const displayListings = computed(() =>
+    apiListings.value || state.listings.slice(0, 6)
+  );
+  const totalCarbon = computed(() =>
+    apiStats.value?.totalCarbonSavedKg ?? localTotalCarbon.value
+  );
+  ```
+
+  4. Update template to use `displayListings` instead of directly referencing `state.listings`.
+
+  ### Rules
+  - Keep all existing store-based rendering as fallback
+  - Do NOT change the visual layout or component structure
+  - API call is fire-and-forget — page renders immediately with local data, updates when API responds
+
+  ### Verification
+  1. `netlify dev` running
+  2. Open / → Network tab shows `/api/listings` and `/api/carbon/stats` calls
+  3. Listings and stats render correctly
+  4. Stop `netlify dev` → page still works with local data

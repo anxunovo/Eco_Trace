@@ -1,0 +1,62 @@
+title: "EcoTrace: Security audit on production"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Security audit on production site
+
+  ### Context
+  - Phase 1-3 are complete (deploy, auth, frontend integration)
+  - Production site: https://stu-eco-trace.netlify.app
+  - Need to ensure the site is secure before v1 launch
+  - This can run in parallel with accessibility and performance audits
+
+  ### What to do
+
+  1. **Dependency vulnerability scan**:
+     - Run `npm audit` on the project
+     - Check for known vulnerabilities in dependencies
+     - Review and update any vulnerable packages
+
+  2. **API security verification**:
+     - Verify all API endpoints require authentication where needed
+     - Check that sensitive data is not exposed in API responses
+     - Verify rate limiting is configured
+     - Test for SQL injection vulnerabilities
+     - Verify CORS configuration is correct
+
+  3. **Authentication security**:
+     - Review password hashing implementation
+     - Check session token security
+     - Verify token expiration and refresh logic
+     - Test password reset flow (if implemented)
+
+  4. **Input validation**:
+     - Verify all user inputs are validated on both frontend and backend
+     - Test for XSS vulnerabilities
+     - Check file upload security (image validation, size limits)
+     - Verify sanitization of user-generated content
+
+  5. **Environment variable security**:
+     - Verify sensitive keys are not committed to git
+     - Check that .env files are in .gitignore
+     - Review Netlify environment variable configuration
+
+  6. **HTTPS and TLS**:
+     - Verify HTTPS is enforced on production
+     - Check TLS certificate validity
+     - Verify no mixed content warnings
+
+  ### Verification
+  1. Zero critical/high severity vulnerabilities in dependencies
+  2. All protected endpoints require valid authentication
+  3. No sensitive data leaked in API responses
+  4. Input validation prevents XSS and injection attacks
+  5. No secrets in git repository
+  6. HTTPS properly configured
+
+  ### Deliverables
+  - Security audit report with findings and risk levels
+  - Prioritized list of security issues to fix
+  - Update `BUGS.md` with any critical security vulnerabilities found

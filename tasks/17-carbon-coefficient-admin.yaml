@@ -1,0 +1,31 @@
+title: "EcoTrace: Carbon Coefficient Admin — CRUD for emission factors"
+source: "sources/github/Yuuqq/Eco_Trace"
+branch: "master"
+autoMode: "AUTO_CREATE_PR"
+
+prompt: |
+  ## Task: Implement Carbon Coefficient Admin endpoints
+
+  Assume `netlify/functions/_lib/` already has `db.js`, `response.js`, `auth.js`.
+
+  ### Create `netlify/functions/coefficients.mjs`
+
+  Endpoint: `GET /api/coefficients`
+  - `config.path = '/api/coefficients'`
+  - Return all active coefficients (where effective_to IS NULL)
+  - Support query param `category` to filter
+
+  Endpoint: `POST /api/coefficients`
+  - `config.path = '/api/coefficients'`
+  - Check user is ADMIN
+  - Body: `{ category, subcategory, mode, factor, substitution_rate, default_weight_kg, source, source_ref, note }`
+  - If a coefficient already exists for this category+subcategory+source, set its `effective_to = now()` (retire old one)
+  - Insert new coefficient with `effective_from = now()`
+  - Return new coefficient
+
+  Endpoint: `GET /api/coefficients/history?category=BOOKS`
+  - Return all coefficients (including retired) for audit trail
+  - Show version history with dates
+
+  This enables judges to see the coefficient table and understand the dual-channel model.
+  Use `getDb()`, `json()`/`error()`, `getCurrentUserId()`.

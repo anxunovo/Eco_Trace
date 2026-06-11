@@ -1,0 +1,7 @@
+{
+  "name": "ecotrace-tests",
+  "type": "module",
+  "scripts": {
+    "test-api": "node api-tests.mjs"
+  }
+}
